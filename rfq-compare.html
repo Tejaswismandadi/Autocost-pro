@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFQ Compare — AutoCost Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.supplier-header{padding:10px 14px;border-radius:8px;margin-bottom:2px;}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+.legend-dot{width:10px;height:10px;border-radius:2px;}
+.neg-item{padding:8px 12px;border-radius:6px;margin-bottom:6px;font-size:12px;display:flex;justify-content:space-between;align-items:center;}
+.norm-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;}
+th.s-col{min-width:100px;text-align:right;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div class="nav-logo-mark">AC</div><div class="nav-logo-text">Auto<span>Cost</span> Pro</div></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link active"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>3 QUOTES LOADED</div>
+</nav>
+
+<div class="page">
+  <div class="flex-between mb-16">
+    <div>
+      <div class="page-title">RFQ <span class="accent">Comparison</span></div>
+      <div class="page-subtitle">Supplier quotes normalized to DDP Net 60 basis and compared against should cost baseline. Color = gap vs baseline.</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Should Cost Baseline</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>≤3% above baseline — accept</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>3–10% above — negotiate</div>
+    <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>&gt;10% above — challenge hard</div>
+  </div>
+
+  <div class="kpi-grid" id="summaryKpis"></div>
+
+  <!-- NORMALIZATION NOTICE -->
+  <div id="normSection" class="mt-12 mb-12"></div>
+
+  <!-- MAIN COMPARISON TABLE -->
+  <div class="card mt-16">
+    <div class="card-header">
+      <div class="card-title">📊 Bucket-by-Bucket Comparison</div>
+      <div style="font-size:11px;color:var(--text3)">All quotes normalized to DDP Net 60 basis</div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="compareTable">
+        <thead id="compareHead"></thead>
+        <tbody id="compareBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- NEGOTIATION PRIORITIES -->
+  <div class="grid-2 mt-16">
+    <div class="card">
+      <div class="card-header"><div class="card-title">🎯 Negotiation Priorities by Supplier</div></div>
+      <div class="card-body" id="negPriorities"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">📋 Commercial Terms Comparison</div></div>
+      <div class="card-body" id="termsComp"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+const baseline = AC.getBaseline();
+const quotes = AC.getQuotes();
+const suppliers = AC.getSuppliers();
+const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+
+// Normalize quotes
+function normalizedTotal(sid) {
+  const q = quotes[sid];
+  if(!q) return 0;
+  let t = q.totalPiecePrice;
+  if(q.freightAdder) t += q.freightAdder;
+  if(q.dutyAdder) t += q.dutyAdder;
+  // Payment terms adjustment: Net45 = +0.5%, Net30 = +1%
+  if(q.paymentTerms === 'Net45') t *= 1.005;
+  if(q.paymentTerms === 'Net30') t *= 1.010;
+  return t;
+}
+
+const normTotals = {};
+suppliers.forEach(s => { normTotals[s.id] = normalizedTotal(s.id); });
+
+// Summary KPIs
+const kpiHtml = `
+  <div class="kpi accent"><div class="kpi-label">Should Cost</div><div class="kpi-value accent">${AC.fmt$(baseTotal)}</div><div class="kpi-sub">Frozen baseline</div></div>
+  ${suppliers.map(s=>{
+    const norm = normTotals[s.id];
+    const gap = norm - baseTotal;
+    const gapPct = (gap/baseTotal*100);
+    const cls = gapPct<=3?'green':gapPct<=10?'amber':'red';
+    return `<div class="kpi ${cls}">
+      <div class="kpi-label">${s.name.split('—')[0].trim()}</div>
+      <div class="kpi-value ${cls}">${AC.fmt$(norm)}</div>
+      <div class="kpi-sub">${gap>=0?'+':''}${AC.fmt$(gap)} (${AC.fmt%(gapPct)}) vs baseline</div>
+    </div>`;
+  }).join('')}
+  <div class="kpi blue"><div class="kpi-label">Best Quote</div><div class="kpi-value blue">${AC.fmt$(Math.min(...suppliers.map(s=>normTotals[s.id])))}</div><div class="kpi-sub">Normalized DDP Net60</div></div>
+`;
+document.getElementById('summaryKpis').innerHTML = kpiHtml;
+
+// Normalization notices
+const normItems = [];
+const s3 = quotes.S3;
+if(s3.freightAdder) normItems.push(`<span style="color:var(--amber)">Supplier C:</span> FOB Shanghai → added $${s3.freightAdder} freight + $${s3.dutyAdder} duty to normalize to DDP`);
+const s2 = quotes.S2;
+if(s2.paymentTerms==='Net45') normItems.push(`<span style="color:var(--amber)">Supplier B:</span> Net45 → added 0.5% financing cost to normalize to Net60 basis`);
+
+document.getElementById('normSection').innerHTML = normItems.length ? `
+  <div style="background:var(--amber-dim);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:12px 16px;">
+    <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:8px">⚠ Normalization Applied</div>
+    ${normItems.map(i=>`<div style="font-size:12px;color:var(--text2);margin-bottom:4px">${i}</div>`).join('')}
+  </div>
+` : '';
+
+// Build comparison table
+const head = document.getElementById('compareHead');
+const body = document.getElementById('compareBody');
+
+head.innerHTML = `<tr>
+  <th>COST BUCKET</th>
+  <th style="text-align:right;color:var(--accent)">SHOULD COST</th>
+  ${suppliers.map(s=>`<th class="s-col" style="color:${s.color}">${s.name.split('—')[1]?.trim()||s.name}</th>`).join('')}
+  <th style="text-align:right">BEST</th>
+  <th style="text-align:right">NEGOTIATE</th>
+</tr>`;
+
+baseline.buckets.forEach(bucket => {
+  const tr = document.createElement('tr');
+  const supplierCells = suppliers.map(s => {
+    const sq = quotes[s.id]?.buckets.find(b=>b.id===bucket.id);
+    if(!sq) return '<td>—</td>';
+    const cls = AC.cellClass(sq.cost, bucket.cost);
+    const diff = AC.pctDiff(sq.cost, bucket.cost);
+    return `<td class="${cls} mono" style="text-align:right">${AC.fmt$(sq.cost)} <span style="font-size:9px">${diff>=0?'+':''}${diff.toFixed(1)}%</span></td>`;
+  }).join('');
+
+  const bucketQuotes = suppliers.map(s => quotes[s.id]?.buckets.find(b=>b.id===bucket.id)?.cost||999);
+  const bestVal = Math.min(...bucketQuotes);
+  const bestSupplier = suppliers[bucketQuotes.indexOf(bestVal)];
+  const allAbove = bucketQuotes.every(c => AC.pctDiff(c,bucket.cost) > 5);
+
+  tr.innerHTML = `
+    <td class="bold" style="color:${bucket.color}">${bucket.name}</td>
+    <td class="cell-base" style="text-align:right">${AC.fmt$(bucket.cost)}</td>
+    ${supplierCells}
+    <td class="mono" style="text-align:right;color:${bestSupplier?.color}">${AC.fmt$(bestVal)}</td>
+    <td style="text-align:center">${allAbove?'<span class="badge badge-warn">Negotiate</span>':'<span class="badge badge-good">Acceptable</span>'}</td>
+  `;
+  body.appendChild(tr);
+});
+
+// Grand total rows
+const totalTr = document.createElement('tr');
+totalTr.style.cssText = 'background:var(--bg4);font-weight:700;border-top:2px solid var(--border2)';
+const normNote = {S1:'DDP Net60',S2:'Normalized to Net60',S3:'Normalized to DDP Net60'};
+totalTr.innerHTML = `
+  <td style="font-family:'Syne',sans-serif;font-size:13px;color:var(--accent)">TOTAL PIECE PRICE</td>
+  <td class="mono" style="text-align:right;color:var(--accent);font-size:14px">${AC.fmt$(baseTotal)}</td>
+  ${suppliers.map(s=>{
+    const norm = normTotals[s.id];
+    const gap = norm-baseTotal;
+    const gapPct = gap/baseTotal*100;
+    const cls = gapPct<=3?'var(--green)':gapPct<=10?'var(--amber)':'var(--red)';
+    return `<td class="mono" style="text-align:right;color:${cls};font-size:13px">${AC.fmt$(norm)}<br><span style="font-size:9px;color:var(--text3)">${normNote[s.id]}</span></td>`;
+  }).join('')}
+  <td class="mono" style="text-align:right;color:var(--green)">${AC.fmt$(Math.min(...suppliers.map(s=>normTotals[s.id])))}</td>
+  <td></td>
+`;
+body.appendChild(totalTr);
+
+// Gap vs should cost row
+const gapTr = document.createElement('tr');
+gapTr.style.background='var(--bg4)';
+gapTr.innerHTML = `
+  <td style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">GAP vs SHOULD COST</td>
+  <td class="mono" style="text-align:right;color:var(--accent)">—</td>
+  ${suppliers.map(s=>{
+    const gap=normTotals[s.id]-baseTotal;
+    const gapPct=gap/baseTotal*100;
+    const cls=gapPct<=3?'var(--green)':gapPct<=10?'var(--amber)':'var(--red)';
+    return `<td class="mono" style="text-align:right;color:${cls}">${gap>=0?'+':''}${AC.fmt$(gap)} (${AC.fmt%(gapPct)})</td>`;
+  }).join('')}
+  <td colspan="2"></td>
+`;
+body.appendChild(gapTr);
+
+// Annual opportunity row
+const annTr = document.createElement('tr');
+annTr.style.background='var(--bg4)';
+annTr.innerHTML = `
+  <td style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">ANNUAL SAVING vs HIGHEST</td>
+  <td></td>
+  ${suppliers.map(s=>{
+    const maxNorm=Math.max(...suppliers.map(x=>normTotals[x.id]));
+    const saving=(maxNorm-normTotals[s.id])*baseline.annualVolume;
+    return `<td class="mono" style="text-align:right;color:var(--text3)">${saving>0?AC.fmtK(saving)+'/yr':'—'}</td>`;
+  }).join('')}
+  <td colspan="2"></td>
+`;
+body.appendChild(annTr);
+
+// Negotiation priorities
+const negDiv = document.getElementById('negPriorities');
+negDiv.innerHTML = suppliers.map(s => {
+  const q = quotes[s.id];
+  const bucketGaps = baseline.buckets.map(bucket => {
+    const sq = q?.buckets.find(b=>b.id===bucket.id);
+    return { name:bucket.name, color:bucket.color, gap: sq ? sq.cost - bucket.cost : 0, pct: sq ? AC.pctDiff(sq.cost,bucket.cost) : 0 };
+  }).filter(b=>b.gap>0).sort((a,b)=>b.gap-a.gap).slice(0,3);
+
+  return `
+    <div style="margin-bottom:14px">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:${s.color};margin-bottom:8px">${s.name}</div>
+      ${bucketGaps.map((bg,i)=>`
+        <div class="neg-item" style="background:${bg.pct>10?'var(--red-dim)':'var(--amber-dim)'}">
+          <span style="color:${bg.color}">${i+1}. ${bg.name}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${bg.pct>10?'var(--red)':'var(--amber)'}">+${AC.fmt$(bg.gap)} (+${bg.pct.toFixed(1)}%)</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}).join('');
+
+// Terms comparison
+const termsDiv = document.getElementById('termsComp');
+const termsRows = [
+  ['Incoterms', 'DDP','DDP','FOB Shanghai'],
+  ['Payment Terms', 'Net 60','Net 45','Net 60'],
+  ['Normalized Basis', 'DDP Net60','DDP Net60 (+adj)','DDP Net60 (+adj)'],
+  ['Quote Date', '2024-02-01','2024-02-03','2024-02-02'],
+  ['APR Commitment', '3.0%/yr','2.5%/yr','2.0%/yr'],
+  ['IATF 16949', '✓ Valid','✓ Valid','✓ Valid'],
+];
+termsDiv.innerHTML = `<table style="width:100%;font-size:12px">
+  <thead><tr>
+    <th style="text-align:left;padding:6px;font-size:10px;color:var(--text3)">TERM</th>
+    ${suppliers.map(s=>`<th style="text-align:center;padding:6px;font-size:10px;color:${s.color}">${s.name.split('—')[0].trim()}</th>`).join('')}
+  </tr></thead>
+  <tbody>
+    ${termsRows.map((row,i)=>`
+      <tr style="background:${i%2===0?'var(--bg3)':''}">
+        <td style="padding:7px 6px;color:var(--text2)">${row[0]}</td>
+        ${suppliers.map((_,si)=>{
+          const val = row[si+1];
+          const isGood = val==='DDP'||val==='Net 60'||val==='✓ Valid'||val==='3.0%/yr';
+          const isWarn = val==='Net 45'||val==='2.5%/yr';
+          const isBad = val.includes('FOB')||val==='2.0%/yr';
+          const cls = isGood?'badge-good':isWarn?'badge-warn':isBad?'badge-warn':'';
+          return `<td style="text-align:center;padding:7px 6px"><span class="badge ${cls}">${val}</span></td>`;
+        }).join('')}
+      </tr>
+    `).join('')}
+  </tbody>
+</table>`;
+</script>
+</body>
+</html>

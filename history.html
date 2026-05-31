@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Price History — AutoCost Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.rev-row{display:grid;grid-template-columns:60px 110px 1fr 120px 100px 120px;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s;}
+.rev-row:hover{background:var(--bg4);}
+.rev-num{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text3);}
+.rev-num.current{color:var(--accent);}
+.type-badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:20px;}
+.chart-container{position:relative;width:100%;height:280px;}
+.chart-svg{width:100%;height:100%;}
+.add-rev-form{display:grid;grid-template-columns:1fr 140px 120px 120px auto;gap:8px;align-items:end;padding:14px;background:var(--bg3);border-top:1px solid var(--border);}
+.trend-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div class="nav-logo-mark">AC</div><div class="nav-logo-text">Auto<span>Cost</span> Pro</div></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link active"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>REVISION TRACKING</div>
+</nav>
+
+<div class="page">
+  <div class="flex-between mb-16">
+    <div>
+      <div class="page-title">Price <span class="accent">History</span></div>
+      <div class="page-subtitle">Complete audit trail — every price change recorded as a numbered revision with reason, date, and impact.</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpiRow"></div>
+
+  <!-- TREND CHART -->
+  <div class="card mt-16 mb-16">
+    <div class="card-header">
+      <div class="card-title">📈 Price Trend — Baseline to Current</div>
+      <div id="chartLegend" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+    </div>
+    <div class="card-body">
+      <div class="chart-container" id="chartContainer"></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- REVISION LOG -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 Revision Log</div>
+        <div style="font-size:11px;color:var(--text3)">Rev 0 = frozen should cost baseline</div>
+      </div>
+
+      <!-- Column headers -->
+      <div class="rev-row" style="background:var(--bg4)">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">REV</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">DATE</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">DESCRIPTION</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:right">PRICE</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center">TYPE</div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:right">CHANGE</div>
+      </div>
+      <div id="revLog"></div>
+
+      <!-- Add new revision form -->
+      <div class="add-rev-form">
+        <div>
+          <label class="form-label">Description</label>
+          <input type="text" id="newDesc" placeholder="e.g. APR Year 4 (3%)">
+        </div>
+        <div>
+          <label class="form-label">New Price $/part</label>
+          <input type="number" id="newPrice" placeholder="0.00" step="0.01">
+        </div>
+        <div>
+          <label class="form-label">Type</label>
+          <select id="newType">
+            <option>APR</option>
+            <option>ECN</option>
+            <option>Index</option>
+            <option>Negotiation</option>
+            <option>Tariff</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Date</label>
+          <input type="date" id="newDate" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <button class="btn btn-primary" onclick="addRevision()" style="margin-top:auto">+ Add Rev</button>
+      </div>
+    </div>
+
+    <!-- ANALYSIS -->
+    <div>
+      <div class="card mb-12">
+        <div class="card-header"><div class="card-title">📊 Change Analysis by Type</div></div>
+        <div class="card-body" id="typeAnalysis"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">💡 Program Cost Trend</div></div>
+        <div class="card-body" id="trendAnalysis"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+let history = AC.getHistory();
+const baseline = AC.getBaseline();
+const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+
+const typeColors = {
+  baseline:'var(--accent)', award:'var(--accent2)', ecn:'var(--amber)',
+  apr:'var(--green)', index:'var(--orange)', tariff:'var(--red)',
+  negotiation:'var(--purple)', other:'var(--text3)'
+};
+
+function render() {
+  const latest = history[history.length-1];
+  const awarded = history.find(h=>h.type==='award');
+  const totalAPR = history.filter(h=>h.type==='apr').reduce((s,h,i,arr)=>{
+    if(i===0) return 0;
+    return s + (h.price - arr[i-1].price);
+  },0);
+
+  // KPIs
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi accent"><div class="kpi-label">Should Cost Baseline</div><div class="kpi-value accent">${AC.fmt$(baseTotal)}</div><div class="kpi-sub">Rev 0 — frozen</div></div>
+    <div class="kpi blue"><div class="kpi-label">Awarded Price</div><div class="kpi-value blue">${AC.fmt$(awarded?.price||0)}</div><div class="kpi-sub">Rev 1 — program award</div></div>
+    <div class="kpi ${latest.price>baseTotal?'red':'green'}"><div class="kpi-label">Current Price</div><div class="kpi-value ${latest.price>baseTotal?'red':'green'}">${AC.fmt$(latest.price)}</div><div class="kpi-sub">Rev ${latest.rev} — ${latest.label}</div></div>
+    <div class="kpi purple"><div class="kpi-label">Total Revisions</div><div class="kpi-value purple">${latest.rev}</div><div class="kpi-sub">since program award</div></div>
+    <div class="kpi ${totalAPR<0?'green':'red'}"><div class="kpi-label">Total APR Savings</div><div class="kpi-value ${totalAPR<0?'green':'red'}">${AC.fmt$(totalAPR)}</div><div class="kpi-sub">from annual reductions</div></div>
+  `;
+
+  // Revision log
+  const revDiv = document.getElementById('revLog');
+  revDiv.innerHTML = history.map((h,i) => {
+    const prev = i>0?history[i-1].price:h.price;
+    const change = h.price - prev;
+    const color = typeColors[h.type]||'var(--text3)';
+    const isLatest = i===history.length-1;
+    return `
+      <div class="rev-row">
+        <div class="rev-num ${isLatest?'current':''}">${String(h.rev).padStart(2,'0')}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${AC.fmtDate(h.date)}</div>
+        <div>
+          <div style="font-size:12px;color:var(--text)">${h.label}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${h.note}</div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;text-align:right;color:${isLatest?'var(--accent)':'var(--text)'}">${AC.fmt$(h.price)}</div>
+        <div style="text-align:center"><span class="type-badge" style="background:${color}20;color:${color}">${h.type.toUpperCase()}</span></div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;text-align:right;color:${i===0?'var(--text3)':change>0?'var(--red)':'var(--green)'}">${i===0?'—':(change>=0?'+':'')+AC.fmt$(change)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Chart
+  renderChart();
+
+  // Type analysis
+  const types = {};
+  history.filter(h=>h.rev>0).forEach((h,i,arr) => {
+    if(!types[h.type]) types[h.type] = {count:0,totalChange:0};
+    types[h.type].count++;
+    const prev = i>0?arr[i-1].price:history[0].price;
+    types[h.type].totalChange += h.price - (history[arr.indexOf(h)-1]?.price||history[0].price);
+  });
+
+  document.getElementById('typeAnalysis').innerHTML = Object.entries(types).map(([type,data])=>{
+    const color = typeColors[type]||'var(--text3)';
+    return `
+      <div class="trend-item">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="type-badge" style="background:${color}20;color:${color}">${type.toUpperCase()}</span>
+          <span style="font-size:12px;color:var(--text2)">${data.count} revision${data.count>1?'s':''}</span>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:12px;color:${data.totalChange>0?'var(--red)':'var(--green)'}">${data.totalChange>=0?'+':''}${AC.fmt$(data.totalChange)}</span>
+      </div>
+    `;
+  }).join('');
+
+  // Trend analysis
+  const currentVsBase = latest.price - baseTotal;
+  const currentVsAward = latest.price - (awarded?.price||0);
+  const aprSavings = Math.abs(totalAPR);
+  document.getElementById('trendAnalysis').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Current vs Baseline</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;color:${currentVsBase>0?'var(--red)':'var(--green)'}">${currentVsBase>=0?'+':''}${AC.fmt$(currentVsBase)} &nbsp;(${AC.fmt%((currentVsBase/baseTotal)*100)})</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${AC.fmtK(Math.abs(currentVsBase)*baseline.annualVolume)}/yr impact</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Total APR Delivered</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;color:var(--green)">-${AC.fmt$(aprSavings)}/part saved via APR</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">${AC.fmtK(aprSavings*baseline.annualVolume)}/yr recurring saving</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Current vs Award Price</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;color:${currentVsAward>0?'var(--red)':'var(--green)'}">${currentVsAward>=0?'+':''}${AC.fmt$(currentVsAward)} from award</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px">Net of all changes since program start</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderChart() {
+  const container = document.getElementById('chartContainer');
+  const w = container.offsetWidth || 600;
+  const h = 260;
+  const pad = {top:20, right:20, bottom:40, left:60};
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+
+  const prices = history.map(h=>h.price);
+  const minP = Math.min(...prices) * 0.97;
+  const maxP = Math.max(...prices) * 1.03;
+
+  const xScale = i => pad.left + (i/(history.length-1)) * cw;
+  const yScale = v => pad.top + (1 - (v-minP)/(maxP-minP)) * ch;
+
+  // Build path
+  const linePath = history.map((h,i) => `${i===0?'M':'L'} ${xScale(i)} ${yScale(h.price)}`).join(' ');
+  const areaPath = `${linePath} L ${xScale(history.length-1)} ${h-pad.bottom} L ${pad.left} ${h-pad.bottom} Z`;
+
+  // Target and walkaway lines
+  const targetY = yScale(baseTotal * 1.03);
+  const baselineY = yScale(baseTotal);
+
+  // Points
+  const points = history.map((h,i) => {
+    const color = typeColors[h.type]||'var(--text3)';
+    return `<circle cx="${xScale(i)}" cy="${yScale(h.price)}" r="5" fill="${color}" stroke="var(--bg)" stroke-width="2">
+      <title>Rev ${h.rev}: ${h.label} — ${AC.fmt$(h.price)}</title>
+    </circle>`;
+  }).join('');
+
+  // X labels
+  const xLabels = history.map((h,i) => `
+    <text x="${xScale(i)}" y="${h-pad.bottom+20}" text-anchor="middle" font-family="DM Mono" font-size="9" fill="var(--text3)">R${h.rev}</text>
+  `).join('');
+
+  // Y labels
+  const ySteps = 5;
+  const yLabels = Array.from({length:ySteps+1},(_,i) => {
+    const v = minP + (maxP-minP)*i/ySteps;
+    return `<text x="${pad.left-8}" y="${yScale(v)+4}" text-anchor="end" font-family="DM Mono" font-size="9" fill="var(--text3)">${AC.fmt$(v,0)}</text>`;
+  }).join('');
+
+  container.innerHTML = `
+    <svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+      <!-- Grid lines -->
+      ${Array.from({length:ySteps+1},(_,i)=>{
+        const y = yScale(minP + (maxP-minP)*i/ySteps);
+        return `<line x1="${pad.left}" y1="${y}" x2="${w-pad.right}" y2="${y}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,4"/>`;
+      }).join('')}
+      <!-- Area fill -->
+      <path d="${areaPath}" fill="url(#areaGrad)" opacity="0.3"/>
+      <!-- Baseline reference -->
+      <line x1="${pad.left}" y1="${baselineY}" x2="${w-pad.right}" y2="${baselineY}" stroke="var(--accent)" stroke-width="1" stroke-dasharray="6,3" opacity="0.6"/>
+      <text x="${w-pad.right+4}" y="${baselineY+4}" font-family="DM Mono" font-size="8" fill="var(--accent)">SC</text>
+      <!-- Target line -->
+      <line x1="${pad.left}" y1="${targetY}" x2="${w-pad.right}" y2="${targetY}" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+      <!-- Price line -->
+      <path d="${linePath}" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linejoin="round"/>
+      <!-- Points -->
+      ${points}
+      <!-- Labels -->
+      ${xLabels}${yLabels}
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--accent2)" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="var(--accent2)" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  `;
+
+  // Legend
+  const legTypes = [...new Set(history.map(h=>h.type))];
+  document.getElementById('chartLegend').innerHTML = legTypes.map(t=>`
+    <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${typeColors[t]||'var(--text3)'}"></div>
+      ${t}
+    </div>
+  `).join('');
+}
+
+function addRevision() {
+  const desc = document.getElementById('newDesc').value.trim();
+  const price = parseFloat(document.getElementById('newPrice').value);
+  const type = document.getElementById('newType').value.toLowerCase();
+  const date = document.getElementById('newDate').value;
+
+  if(!desc || !price || !date) {
+    alert('Please fill in description, price, and date');
+    return;
+  }
+
+  const lastRev = history[history.length-1].rev;
+  const prev = history[history.length-1].price;
+
+  history.push({
+    rev: lastRev + 1,
+    date,
+    label: desc,
+    price,
+    type,
+    note: `Manual entry — change from ${AC.fmt$(prev)} to ${AC.fmt$(price)} (${AC.fmt$(price-prev)})`
+  });
+
+  AC.saveHistory(history);
+  document.getElementById('newDesc').value = '';
+  document.getElementById('newPrice').value = '';
+  render();
+}
+
+render();
+window.addEventListener('resize', renderChart);
+</script>
+</body>
+</html>

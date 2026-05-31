@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Tracker — AutoCost Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.index-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:border-color .2s;}
+.index-card:hover{border-color:var(--border3);}
+.index-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;margin-bottom:4px;}
+.index-vals{display:flex;justify-content:space-between;align-items:center;margin:8px 0;}
+.index-base{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.index-current{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;}
+.index-change{font-family:'DM Mono',monospace;font-size:11px;padding:2px 7px;border-radius:4px;}
+.change-up{background:var(--red-dim);color:var(--red);}
+.change-down{background:var(--green-dim);color:var(--green);}
+.change-flat{background:var(--bg4);color:var(--text3);}
+.sim-section{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+.sim-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;margin-bottom:12px;}
+.ecn-item{display:grid;grid-template-columns:1fr 120px 120px 100px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.ecn-item:last-child{border-bottom:none;}
+.waterfall-bar{height:28px;display:flex;align-items:center;border-radius:4px;padding:0 8px;font-family:'DM Mono',monospace;font-size:11px;transition:width .4s;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div class="nav-logo-mark">AC</div><div class="nav-logo-text">Auto<span>Cost</span> Pro</div></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link active"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>LIVE SIMULATION</div>
+</nav>
+
+<div class="page">
+  <div class="flex-between mb-16">
+    <div>
+      <div class="page-title">Live Price <span class="accent">Tracker</span></div>
+      <div class="page-subtitle">Update material indices, ECNs, and tariffs. See instantly how each change flows through to total piece price.</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveIndices()">💾 Save Changes</button>
+  </div>
+
+  <div class="kpi-grid" id="kpiRow"></div>
+
+  <!-- WATERFALL CHART -->
+  <div class="card mt-16 mb-16">
+    <div class="card-header"><div class="card-title">📊 Price Impact Waterfall — Baseline to Current</div></div>
+    <div class="card-body" id="waterfallChart"></div>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- MATERIAL INDICES -->
+    <div>
+      <div class="section-label">Material & Cost Indices</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="indexCards"></div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <!-- ECN TRACKER -->
+      <div class="sim-section">
+        <div class="sim-title">📋 ECN / Engineering Change Impacts</div>
+        <div class="ecn-item" style="background:var(--bg4);border-radius:6px;padding:6px 8px;margin-bottom:8px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">DESCRIPTION</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center">TYPE</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center">IMPACT $/PART</div>
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);text-align:center">STATUS</div>
+        </div>
+        <div id="ecnList"></div>
+        <button class="btn btn-secondary btn-sm mt-8" onclick="addEcn()">+ Add ECN</button>
+      </div>
+
+      <!-- TARIFF SIMULATION -->
+      <div class="sim-section">
+        <div class="sim-title">🌍 Tariff / Trade Impact Simulation</div>
+        <div class="form-group">
+          <label class="form-label">Tariff scenario</label>
+          <select id="tariffScenario" onchange="updateTariff()">
+            <option value="0">No tariff (current USMCA)</option>
+            <option value="0.025">USMCA 2.5% duty</option>
+            <option value="0.10">Section 232 — 10% steel/aluminum</option>
+            <option value="0.25">Section 301 — 25% China goods</option>
+            <option value="0.145">Executive Order — 145% China tariff</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tariff applies to % of piece price</label>
+          <div style="display:flex;align-items:center;gap:10px">
+            <input type="range" id="tariffPct" min="0" max="100" value="15" oninput="document.getElementById('tariffPctVal').textContent=this.value+'%';updateTariff()">
+            <span id="tariffPctVal" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--amber);min-width:40px">15%</span>
+          </div>
+        </div>
+        <div id="tariffImpact" style="background:var(--bg4);border-radius:8px;padding:12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text2)">
+          Select a scenario to see impact
+        </div>
+      </div>
+
+      <!-- TARGET GAUGE -->
+      <div class="sim-section">
+        <div class="sim-title">🎯 Price vs Target</div>
+        <div id="targetGauge"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+const baseline = AC.getBaseline();
+const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+let indices = AC.getIndices();
+let ecns = AC.load('ecns', [
+  {id:'e1', desc:'ECN-001 Gate redesign — slider eliminated', type:'DFM',    impact:-1.20, status:'Approved'},
+  {id:'e2', desc:'ECN-004 USB module upgrade per CR-2024-44', type:'Spec',   impact:+2.80, status:'Approved'},
+  {id:'e3', desc:'ECN-007 Armrest foam density change',       type:'Material',impact:+0.45, status:'Pending'},
+]);
+let tariffImpact = 0;
+
+function calcCurrentPrice() {
+  // Index impacts
+  let indexImpact = 0;
+  indices.forEach(idx => {
+    const changePct = (idx.currentValue - idx.baseValue) / idx.baseValue;
+    indexImpact += baseTotal * idx.partialPct * changePct;
+  });
+  // ECN impacts (approved only)
+  const ecnImpact = ecns.filter(e=>e.status==='Approved').reduce((s,e)=>s+e.impact,0);
+  return baseTotal + indexImpact + ecnImpact + tariffImpact;
+}
+
+function render() {
+  const currentPrice = calcCurrentPrice();
+  const totalImpact = currentPrice - baseTotal;
+  const targetPrice = baseTotal * 1.03;
+  const walkaway = baseTotal * 1.08;
+  const awardedPrice = 112.40;
+
+  // KPIs
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi accent"><div class="kpi-label">Should Cost Baseline</div><div class="kpi-value accent">${AC.fmt$(baseTotal)}</div><div class="kpi-sub">Frozen — never changes</div></div>
+    <div class="kpi ${totalImpact>0?'red':'green'}"><div class="kpi-label">Current Simulated Price</div><div class="kpi-value ${totalImpact>0?'red':'green'}">${AC.fmt$(currentPrice)}</div><div class="kpi-sub">${totalImpact>=0?'+':''}${AC.fmt$(totalImpact)} vs baseline</div></div>
+    <div class="kpi blue"><div class="kpi-label">Awarded Price (Rev 1)</div><div class="kpi-value blue">${AC.fmt$(awardedPrice)}</div><div class="kpi-sub">Supplier A — DDP Net 60</div></div>
+    <div class="kpi ${currentPrice>walkaway?'red':currentPrice>targetPrice?'amber':'green'}">
+      <div class="kpi-label">vs Target Price</div>
+      <div class="kpi-value ${currentPrice>walkaway?'red':currentPrice>targetPrice?'amber':'green'}">${AC.fmt$(currentPrice-targetPrice)}</div>
+      <div class="kpi-sub">Target: ${AC.fmt$(targetPrice)} | Walkaway: ${AC.fmt$(walkaway)}</div>
+    </div>
+    <div class="kpi purple"><div class="kpi-label">Annual Impact vs Baseline</div><div class="kpi-value purple">${AC.fmtK(Math.abs(totalImpact)*baseline.annualVolume)}</div><div class="kpi-sub">${totalImpact>=0?'cost increase':'cost saving'} at ${(baseline.annualVolume/1000).toFixed(0)}K units</div></div>
+  `;
+
+  // Waterfall
+  renderWaterfall(currentPrice);
+
+  // Index cards
+  renderIndexCards();
+
+  // Target gauge
+  renderGauge(currentPrice, targetPrice, walkaway, awardedPrice);
+}
+
+function renderWaterfall(currentPrice) {
+  const items = [
+    {label:'Should Cost Baseline', value:baseTotal, type:'base', color:'var(--accent)'},
+  ];
+
+  indices.forEach(idx => {
+    const changePct = (idx.currentValue - idx.baseValue) / idx.baseValue;
+    const impact = baseTotal * idx.partialPct * changePct;
+    if(Math.abs(impact) > 0.01) {
+      items.push({label:idx.name, value:impact, type:'index', color:impact>0?'var(--red)':'var(--green)'});
+    }
+  });
+
+  ecns.filter(e=>e.status==='Approved').forEach(e => {
+    items.push({label:e.desc.substring(0,35)+'…', value:e.impact, type:'ecn', color:e.impact>0?'var(--red)':'var(--green)'});
+  });
+
+  if(tariffImpact !== 0) {
+    items.push({label:'Tariff/Trade Impact', value:tariffImpact, type:'tariff', color:tariffImpact>0?'var(--red)':'var(--green)'});
+  }
+
+  items.push({label:'Current Simulated Price', value:currentPrice, type:'total', color:'var(--accent2)'});
+
+  const maxVal = Math.max(...items.map(i=>Math.abs(i.value)), currentPrice);
+
+  document.getElementById('waterfallChart').innerHTML = items.map(item => {
+    const isTotal = item.type==='base'||item.type==='total';
+    const barWidth = isTotal ? (item.value/maxVal*100) : (Math.abs(item.value)/maxVal*100);
+    const displayVal = item.type==='base'||item.type==='total' ? AC.fmt$(item.value) : (item.value>=0?'+':'')+AC.fmt$(item.value);
+    return `
+      <div style="display:grid;grid-template-columns:200px 1fr 80px;gap:8px;align-items:center;margin-bottom:6px">
+        <div style="font-size:11px;color:${isTotal?'var(--text)':'var(--text2)'};text-align:right;padding-right:8px">${item.label}</div>
+        <div><div class="waterfall-bar" style="width:${Math.max(barWidth,2)}%;background:${item.color}20;border:1px solid ${item.color}40;color:${item.color}">&nbsp;</div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:${item.color};font-weight:${isTotal?700:400}">${displayVal}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderIndexCards() {
+  document.getElementById('indexCards').innerHTML = indices.map(idx => {
+    const changePct = (idx.currentValue - idx.baseValue) / idx.baseValue * 100;
+    const impact = baseTotal * idx.partialPct * changePct / 100;
+    const changeClass = changePct > 0.5 ? 'change-up' : changePct < -0.5 ? 'change-down' : 'change-flat';
+    const changeSign = changePct >= 0 ? '+' : '';
+    return `
+      <div class="index-card" style="border-color:${Math.abs(changePct)>5?'rgba(239,68,68,.3)':'var(--border)'}">
+        <div class="index-name" style="color:${idx.color}">${idx.name}</div>
+        <div class="index-vals">
+          <div>
+            <div class="index-base">Base: ${idx.baseValue} ${idx.unit}</div>
+            <input type="number" style="width:90px;margin-top:4px" value="${idx.currentValue}" step="0.05"
+              oninput="updateIndex('${idx.id}',this.value)">
+          </div>
+          <span class="index-change ${changeClass}">${changeSign}${changePct.toFixed(1)}%</span>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:${impact>0?'var(--red)':'var(--green)'}">
+          Price impact: ${impact>=0?'+':''}${AC.fmt$(impact)}/part &nbsp;·&nbsp; ${AC.fmtK(Math.abs(impact)*baseline.annualVolume)}/yr
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:4px">${idx.source} · Updated ${AC.fmtDate(idx.lastUpdate)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderGauge(current, target, walkaway, awarded) {
+  const min = baseTotal * 0.9;
+  const max = walkaway * 1.1;
+  const range = max - min;
+  const pos = v => Math.max(0, Math.min(100, (v-min)/range*100));
+
+  document.getElementById('targetGauge').innerHTML = `
+    <div style="position:relative;height:40px;margin:10px 0 24px">
+      <!-- Background zones -->
+      <div style="position:absolute;left:0;top:8px;width:${pos(target)}%;height:24px;background:var(--green-dim);border-radius:4px 0 0 4px"></div>
+      <div style="position:absolute;left:${pos(target)}%;top:8px;width:${pos(walkaway)-pos(target)}%;height:24px;background:var(--amber-dim)"></div>
+      <div style="position:absolute;left:${pos(walkaway)}%;top:8px;right:0;height:24px;background:var(--red-dim);border-radius:0 4px 4px 0"></div>
+      <!-- Markers -->
+      <div style="position:absolute;left:${pos(baseTotal)}%;top:0;width:2px;height:40px;background:var(--accent)"></div>
+      <div style="position:absolute;left:${pos(current)}%;top:0;width:3px;height:40px;background:${current>walkaway?'var(--red)':current>target?'var(--amber)':'var(--green)'};border-radius:2px"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      ${[
+        {label:'Should Cost',color:'var(--accent)',val:baseTotal},
+        {label:'Target (+3%)',color:'var(--amber)',val:target},
+        {label:'Walkaway (+8%)',color:'var(--red)',val:walkaway}
+      ].map(m=>`
+        <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:6px">
+          <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${m.label}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${m.color}">${AC.fmt$(m.val)}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:8px;text-align:center">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:4px">CURRENT SIMULATED PRICE</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:${current>walkaway?'var(--red)':current>target?'var(--amber)':'var(--green)'}">${AC.fmt$(current)}</div>
+      <div style="margin-top:4px"><span class="badge ${current>walkaway?'badge-bad':current>target?'badge-warn':'badge-good'}">${current>walkaway?'ABOVE WALKAWAY':current>target?'ABOVE TARGET':'WITHIN TARGET'}</span></div>
+    </div>
+  `;
+}
+
+function updateIndex(id, val) {
+  const idx = indices.find(i=>i.id===id);
+  if(idx) {
+    idx.currentValue = parseFloat(val)||idx.baseValue;
+    idx.lastUpdate = new Date().toISOString().split('T')[0];
+  }
+  render();
+}
+
+function updateTariff() {
+  const rate = parseFloat(document.getElementById('tariffScenario').value)||0;
+  const pct = parseInt(document.getElementById('tariffPct').value)/100;
+  tariffImpact = baseTotal * pct * rate;
+  const totalCurrent = calcCurrentPrice();
+  document.getElementById('tariffImpact').innerHTML = rate===0 ? 'No tariff — USMCA compliant' : `
+    <div style="color:var(--amber)">Tariff rate: ${(rate*100).toFixed(1)}% on ${(pct*100).toFixed(0)}% of piece price</div>
+    <div style="margin-top:6px;color:var(--red)">Impact: +${AC.fmt$(tariffImpact)}/part &nbsp;·&nbsp; +${AC.fmtK(tariffImpact*baseline.annualVolume)}/yr</div>
+    <div style="margin-top:6px;color:var(--text3)">Supplier could claim passthrough under LTA tariff clause</div>
+  `;
+  render();
+}
+
+// ECN list
+function renderEcns() {
+  document.getElementById('ecnList').innerHTML = ecns.map((e,i) => `
+    <div class="ecn-item">
+      <div style="font-size:12px;color:var(--text2)">${e.desc}</div>
+      <div style="text-align:center"><span class="badge badge-blue">${e.type}</span></div>
+      <div style="text-align:center">
+        <input type="number" style="width:90px;text-align:center;font-family:'DM Mono',monospace" value="${e.impact}" step="0.10"
+          oninput="ecns[${i}].impact=parseFloat(this.value)||0;render()">
+      </div>
+      <div style="text-align:center">
+        <select style="font-size:11px" onchange="ecns[${i}].status=this.value;render()">
+          <option ${e.status==='Approved'?'selected':''}>Approved</option>
+          <option ${e.status==='Pending'?'selected':''}>Pending</option>
+          <option ${e.status==='Rejected'?'selected':''}>Rejected</option>
+        </select>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addEcn() {
+  ecns.push({id:'e'+(ecns.length+1),desc:'New ECN — enter description',type:'Change',impact:0,status:'Pending'});
+  renderEcns();
+  render();
+}
+
+function saveIndices() {
+  AC.saveIndices(indices);
+  AC.save('ecns', ecns);
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '✓ Saved';
+  setTimeout(()=>btn.textContent='💾 Save Changes',1500);
+}
+
+renderEcns();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Scorecard — AutoCost Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.dim-header{background:var(--bg4);padding:10px 14px;border-bottom:1px solid var(--border);}
+.criterion-row{display:grid;grid-template-columns:1fr repeat(3,110px);gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);transition:background .1s;}
+.criterion-row:hover{background:var(--bg4);}
+.score-input{width:80px;text-align:center;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+.disq-row{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);}
+.disq-check{width:18px;height:18px;accent-color:var(--red);}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;text-align:center;}
+.result-score{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;letter-spacing:-2px;line-height:1;}
+.result-name{font-size:13px;color:var(--text2);margin-top:6px;}
+.dim-score-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.recommend-box{padding:16px;border-radius:10px;border:1px solid;margin-top:16px;}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div class="nav-logo-mark">AC</div><div class="nav-logo-text">Auto<span>Cost</span> Pro</div></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link active"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>SCORING ACTIVE</div>
+</nav>
+
+<div class="page">
+  <div class="flex-between mb-16">
+    <div>
+      <div class="page-title">Supplier <span class="accent">Scorecard</span></div>
+      <div class="page-subtitle">Score all three suppliers across 5 dimensions — 28 criteria, 7 disqualifiers. Auto-generates award recommendation.</div>
+    </div>
+    <button class="btn btn-primary" onclick="saveAndRecalc()">💾 Save & Recalculate</button>
+  </div>
+
+  <div id="resultsRow" class="grid-3 mb-16"></div>
+
+  <div class="grid-2 mb-16">
+    <div id="dimensionBreakdown" class="card"></div>
+    <div id="recommendationBox" class="card"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📋 Scoring Matrix — Rate each criterion 0–10</div>
+      <div style="font-size:11px;color:var(--text3)">Hover criterion name for scoring guide</div>
+    </div>
+    <div id="scoringMatrix"></div>
+  </div>
+
+  <div class="card mt-16">
+    <div class="card-header"><div class="card-title">🚫 Disqualifiers — Check any that apply</div></div>
+    <div id="disqMatrix"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+const checklist = AC.getChecklist();
+const suppliers = AC.getSuppliers();
+let scores = AC.getScores();
+let disq = AC.load('disq', {});
+
+// Init scores
+suppliers.forEach(s => {
+  if(!scores[s.id]) {
+    scores[s.id] = {};
+    checklist.dimensions.forEach(dim => {
+      dim.criteria.forEach(c => {
+        scores[s.id][c.id] = 7; // default
+      });
+    });
+  }
+});
+
+// Build scoring matrix
+const matrix = document.getElementById('scoringMatrix');
+matrix.innerHTML = checklist.dimensions.map(dim => `
+  <div>
+    <div class="dim-header" style="border-left:3px solid ${dim.color}">
+      <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:${dim.color}">${dim.name}</span>
+      <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-left:8px">Weighting: ${dim.weight}%</span>
+    </div>
+    <!-- Header -->
+    <div class="criterion-row" style="background:var(--bg4)">
+      <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">CRITERION</div>
+      ${suppliers.map(s=>`<div style="font-family:'DM Mono',monospace;font-size:10px;text-align:center;color:${s.color}">${s.name.split('—')[0].trim()}</div>`).join('')}
+    </div>
+    ${dim.criteria.map(c => `
+      <div class="criterion-row">
+        <div data-tip="${c.helpText}" style="font-size:12px;color:var(--text2);cursor:help">${c.name}</div>
+        ${suppliers.map(s=>`
+          <div style="text-align:center">
+            <input type="number" class="score-input" id="score-${s.id}-${c.id}"
+              min="0" max="${c.maxScore}" value="${scores[s.id]?.[c.id]??7}"
+              oninput="updateScore('${s.id}','${c.id}',this.value)"
+              style="border-color:${getScoreColor(scores[s.id]?.[c.id]??7,c.maxScore)}">
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}
+  </div>
+`).join('');
+
+// Build disqualifier matrix
+const disqDiv = document.getElementById('disqMatrix');
+disqDiv.innerHTML = checklist.disqualifiers.map(dq => `
+  <div class="disq-row">
+    <div style="min-width:200px;font-size:12px;color:var(--text2);font-weight:500">${dq.name}</div>
+    ${suppliers.map(s=>`
+      <div style="flex:1;display:flex;align-items:center;gap:6px;justify-content:center">
+        <input type="checkbox" class="disq-check" id="disq-${s.id}-${dq.id}"
+          ${disq[s.id]?.[dq.id]?'checked':''}
+          onchange="updateDisq('${s.id}','${dq.id}',this.checked)">
+        <label for="disq-${s.id}-${dq.id}" style="font-size:11px;color:var(--text3)">${s.name.split('—')[0].trim()}</label>
+      </div>
+    `).join('')}
+  </div>
+`).join('');
+
+function getScoreColor(val, max) {
+  const pct = val/max;
+  if(pct >= 0.8) return 'var(--green)';
+  if(pct >= 0.6) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function updateScore(sid, cid, val) {
+  if(!scores[sid]) scores[sid] = {};
+  scores[sid][cid] = Math.max(0, Math.min(10, parseInt(val)||0));
+  const inp = document.getElementById(`score-${sid}-${cid}`);
+  if(inp) inp.style.borderColor = getScoreColor(scores[sid][cid], 10);
+  calcResults();
+}
+
+function updateDisq(sid, dqid, val) {
+  if(!disq[sid]) disq[sid] = {};
+  disq[sid][dqid] = val;
+  calcResults();
+}
+
+function calcTotal(sid) {
+  let total = 0;
+  checklist.dimensions.forEach(dim => {
+    let dimScore = 0;
+    dim.criteria.forEach(c => { dimScore += scores[sid]?.[c.id] || 0; });
+    const dimAvg = dimScore / dim.criteria.length;
+    total += dimAvg * (dim.weight/100);
+  });
+  return Math.round(total * 10);
+}
+
+function hasDisq(sid) {
+  return checklist.disqualifiers.some(dq => disq[sid]?.[dq.id]);
+}
+
+function getDisqList(sid) {
+  return checklist.disqualifiers.filter(dq => disq[sid]?.[dq.id]).map(dq=>dq.name);
+}
+
+function calcDimScores(sid) {
+  return checklist.dimensions.map(dim => {
+    let dimScore = 0;
+    dim.criteria.forEach(c => { dimScore += scores[sid]?.[c.id] || 0; });
+    return { ...dim, rawScore: dimScore, avgScore: dimScore/dim.criteria.length, weighted: (dimScore/dim.criteria.length)*(dim.weight/100)*10 };
+  });
+}
+
+function calcResults() {
+  const totals = {};
+  suppliers.forEach(s => { totals[s.id] = hasDisq(s.id) ? 0 : calcTotal(s.id); });
+  const winner = suppliers.reduce((a,b) => totals[a.id]>totals[b.id]?a:b);
+
+  // Results cards
+  document.getElementById('resultsRow').innerHTML = suppliers.map(s => {
+    const score = totals[s.id];
+    const interp = AC.scoreLabel(score);
+    const color = AC.scoreColor(score);
+    const dq = hasDisq(s.id);
+    const dqList = getDisqList(s.id);
+    return `
+      <div class="result-card" style="border-color:${color}40">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:8px">${s.name}</div>
+        <div class="result-score" style="color:${dq?'var(--red)':color}">${dq?'DQ':score}</div>
+        <div style="margin-top:8px"><span class="badge ${interp.cls}">${dq?'DISQUALIFIED':interp.label}</span></div>
+        ${dq?`<div style="margin-top:8px;font-size:11px;color:var(--red)">${dqList[0]}</div>`:''}
+        ${!dq&&s.id===winner.id?`<div style="margin-top:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--accent)">★ RECOMMENDED</div>`:''}
+      </div>
+    `;
+  }).join('');
+
+  // Dimension breakdown
+  const dimDiv = document.getElementById('dimensionBreakdown');
+  dimDiv.innerHTML = `
+    <div class="card-header"><div class="card-title">📊 Dimension Scores</div></div>
+    <div class="card-body">
+      ${checklist.dimensions.map(dim => {
+        return `
+          <div style="margin-bottom:12px">
+            <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:${dim.color};margin-bottom:6px">${dim.name} (${dim.weight}% weight)</div>
+            ${suppliers.map(s => {
+              const ds = calcDimScores(s.id).find(d=>d.id===dim.id);
+              const pct = ds.avgScore/10*100;
+              return `
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                  <div style="width:80px;font-size:11px;color:${s.color}">${s.name.split('—')[0].trim()}</div>
+                  <div style="flex:1"><div class="progress-wrap"><div class="progress-bar" style="width:${pct}%;background:${dim.color}"></div></div></div>
+                  <div style="font-family:'DM Mono',monospace;font-size:11px;width:36px;text-align:right;color:${dim.color}">${ds.avgScore.toFixed(1)}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  // Recommendation
+  const recDiv = document.getElementById('recommendationBox');
+  const winnerScore = totals[winner.id];
+  const winnerInterp = AC.scoreLabel(winnerScore);
+  const winnerColor = AC.scoreColor(winnerScore);
+  const allDq = suppliers.every(s=>hasDisq(s.id));
+  recDiv.innerHTML = `
+    <div class="card-header"><div class="card-title">🏆 Award Recommendation</div></div>
+    <div class="card-body">
+      ${allDq ? `
+        <div style="padding:16px;background:var(--red-dim);border:1px solid rgba(239,68,68,.2);border-radius:8px;color:var(--red)">
+          All suppliers have disqualifiers. Return to RFQ and re-issue to qualified suppliers.
+        </div>
+      ` : `
+        <div class="recommend-box" style="background:${winnerColor}12;border-color:${winnerColor}40">
+          <div style="font-family:'Syne',sans-serif;font-size:11px;color:${winnerColor};letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Recommended Award</div>
+          <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:${winnerColor}">${winner.name}</div>
+          <div style="margin-top:6px"><span class="badge" style="background:${winnerColor}20;color:${winnerColor}">Score: ${winnerScore}/100 — ${winnerInterp.label}</span></div>
+          <div style="margin-top:12px;font-size:12px;color:var(--text2);line-height:1.6">
+            ${winnerScore>=85?'Strong recommendation for award. Proceed with commercial agreement execution.':
+              winnerScore>=70?'Acceptable for award subject to resolution of identified gaps. Issue conditional LOI.':
+              'Marginal recommendation. Consider requesting best-and-final offer before award decision.'}
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          ${suppliers.filter(s=>s.id!==winner.id&&!hasDisq(s.id)).map(s=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--bg3);border-radius:6px;margin-bottom:6px">
+              <span style="font-size:12px;color:var(--text2)">${s.name}</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${totals[s.id]}/100</span>
+                <span class="badge ${AC.scoreLabel(totals[s.id]).cls}">${AC.scoreLabel(totals[s.id]).label}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function saveAndRecalc() {
+  AC.saveScores(scores);
+  AC.save('disq', disq);
+  calcResults();
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '✓ Saved';
+  setTimeout(()=>btn.textContent='💾 Save & Recalculate',1500);
+}
+
+calcResults();
+</script>
+</body>
+</html>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Should Cost Baseline — AutoCost Pro</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.bucket-row{cursor:pointer;user-select:none;}
+.bucket-row td{font-weight:500;}
+.bucket-row:hover td{filter:brightness(1.1);}
+.item-row td{padding:7px 12px;font-size:11px;}
+.item-row{display:none;}
+.item-row.visible{display:table-row;}
+.bucket-toggle{font-size:10px;color:var(--text3);transition:transform .2s;}
+.bucket-open .bucket-toggle{transform:rotate(90deg);}
+.bar-cell{width:120px;}
+.bar-mini{height:4px;border-radius:2px;}
+.lock-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--amber-dim);color:var(--amber);font-family:'DM Mono',monospace;font-size:10px;border:1px solid rgba(245,158,11,.2);}
+</style>
+</head>
+<body>
+<nav>
+  <a href="index.html" class="nav-logo"><div class="nav-logo-mark">AC</div><div class="nav-logo-text">Auto<span>Cost</span> Pro</div></a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link active"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>BASELINE LOCKED</div>
+</nav>
+
+<div class="page">
+  <div class="flex-between mb-16">
+    <div>
+      <div class="page-title">Should Cost <span class="accent">Baseline</span></div>
+      <div class="page-subtitle">Built at program award — frozen as permanent reference. Never changes.</div>
+    </div>
+    <div class="lock-badge">🔒 FROZEN — Program Award Date: Jan 15, 2024</div>
+  </div>
+
+  <div class="kpi-grid" id="kpiRow"></div>
+
+  <div class="card mt-16">
+    <div class="card-header">
+      <div class="card-title">📋 Cost Breakdown — All 10 Buckets</div>
+      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Click any bucket to expand line items</div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th style="width:24px"></th>
+            <th>COST BUCKET / LINE ITEM</th>
+            <th>CALCULATION BASIS</th>
+            <th>DATA SOURCE</th>
+            <th style="width:120px">DISTRIBUTION</th>
+            <th style="text-align:right">$/PART</th>
+            <th style="text-align:right">% TOTAL</th>
+            <th style="text-align:right">$/YEAR</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-2 mt-16">
+    <div class="card">
+      <div class="card-header"><div class="card-title">📊 Cost Structure</div></div>
+      <div class="card-body" id="structureViz"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">💡 Key Insights</div></div>
+      <div class="card-body" id="insights"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script>
+const baseline = AC.getBaseline();
+const total = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+const vol = baseline.annualVolume;
+
+// KPIs
+document.getElementById('kpiRow').innerHTML = `
+  <div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">${AC.fmt$(total)}</div><div class="kpi-sub">per unit — frozen baseline</div></div>
+  <div class="kpi blue"><div class="kpi-label">Annual Cost</div><div class="kpi-value blue">${AC.fmtK(total*vol)}</div><div class="kpi-sub">at ${(vol/1000).toFixed(0)}K units/year</div></div>
+  <div class="kpi purple"><div class="kpi-label">Program Life Cost</div><div class="kpi-value purple">${AC.fmtK(total*vol*baseline.programLife)}</div><div class="kpi-sub">over ${baseline.programLife} years</div></div>
+  <div class="kpi green"><div class="kpi-label">Buckets</div><div class="kpi-value green">10</div><div class="kpi-sub">cost categories</div></div>
+  <div class="kpi amber"><div class="kpi-label">Line Items</div><div class="kpi-value amber">60+</div><div class="kpi-sub">individual cost lines</div></div>
+`;
+
+// Table
+const tbody = document.getElementById('tableBody');
+baseline.buckets.forEach((bucket,bi) => {
+  const pct = (bucket.cost/total*100).toFixed(1);
+  const tr = document.createElement('tr');
+  tr.className = 'bucket-row';
+  tr.id = 'bucket-'+bi;
+  tr.innerHTML = `
+    <td style="color:var(--text3);text-align:center"><span class="bucket-toggle">▶</span></td>
+    <td class="bold" style="color:${bucket.color}">${String(bi+1).padStart(2,'0')} — ${bucket.name}</td>
+    <td style="color:var(--text3);font-size:11px">${bucket.items.length} line items</td>
+    <td></td>
+    <td class="bar-cell"><div class="bar-mini" style="width:${Math.min(pct*2.2,100)}%;background:${bucket.color}"></div></td>
+    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmt$(bucket.cost)}</td>
+    <td class="mono" style="text-align:right">${pct}%</td>
+    <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
+  `;
+  tr.onclick = () => toggleBucket(bi);
+  tbody.appendChild(tr);
+
+  bucket.items.forEach((item,ii) => {
+    const itr = document.createElement('tr');
+    itr.className = 'item-row';
+    itr.id = `item-${bi}-${ii}`;
+    itr.style.background = bi%2===0?'rgba(0,0,0,.15)':'rgba(0,0,0,.08)';
+    itr.innerHTML = `
+      <td></td>
+      <td style="padding-left:28px;color:var(--text2)">${item.name}</td>
+      <td style="color:var(--text3)">${item.basis}</td>
+      <td style="color:var(--text3)">${item.source}</td>
+      <td></td>
+      <td class="mono" style="text-align:right">${AC.fmt$(item.cost,3)}</td>
+      <td class="mono" style="text-align:right;color:var(--text3)">${(item.cost/total*100).toFixed(2)}%</td>
+      <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(item.cost*vol)}</td>
+    `;
+    tbody.appendChild(itr);
+  });
+
+  // Subtotal row
+  const str = document.createElement('tr');
+  str.id = `sub-${bi}`;
+  str.className = 'item-row';
+  str.style.cssText = 'border-top:1px solid var(--border2);';
+  str.innerHTML = `
+    <td></td>
+    <td style="padding-left:28px;font-weight:600;color:${bucket.color};font-size:11px">SUBTOTAL — ${bucket.name}</td>
+    <td colspan="2"></td>
+    <td></td>
+    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmt$(bucket.cost)}</td>
+    <td class="mono bold" style="text-align:right;color:${bucket.color}">${pct}%</td>
+    <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
+  `;
+  tbody.appendChild(str);
+});
+
+// Grand total
+const gtr = document.createElement('tr');
+gtr.style.cssText='background:var(--bg4);border-top:2px solid var(--border2)';
+gtr.innerHTML = `
+  <td></td>
+  <td style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent)">SHOULD COST — GRAND TOTAL</td>
+  <td colspan="2" style="color:var(--text3);font-size:11px">Baseline locked Jan 15, 2024</td>
+  <td></td>
+  <td class="mono" style="text-align:right;font-size:15px;font-weight:700;color:var(--accent)">${AC.fmt$(total)}</td>
+  <td class="mono" style="text-align:right;color:var(--accent)">100%</td>
+  <td class="mono" style="text-align:right;color:var(--accent)">${AC.fmtK(total*vol)}/yr</td>
+`;
+tbody.appendChild(gtr);
+
+function toggleBucket(bi) {
+  const row = document.getElementById('bucket-'+bi);
+  const isOpen = row.classList.contains('bucket-open');
+  row.classList.toggle('bucket-open', !isOpen);
+  const bucket = baseline.buckets[bi];
+  bucket.items.forEach((_,ii) => {
+    const el = document.getElementById(`item-${bi}-${ii}`);
+    if(el) el.classList.toggle('visible', !isOpen);
+  });
+  const sub = document.getElementById(`sub-${bi}`);
+  if(sub) sub.classList.toggle('visible', !isOpen);
+}
+
+// Structure viz
+const sv = document.getElementById('structureViz');
+sv.innerHTML = baseline.buckets.map(b=>{
+  const pct = (b.cost/total*100).toFixed(1);
+  return `
+    <div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:12px;color:var(--text2)">${b.name}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${b.color}">${AC.fmt$(b.cost)} · ${pct}%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${pct*2}%;background:${b.color}"></div></div>
+    </div>
+  `;
+}).join('');
+
+// Insights
+const topBucket = [...baseline.buckets].sort((a,b)=>b.cost-a.cost)[0];
+const matBucket = baseline.buckets.find(b=>b.id==='mat');
+const laborBucket = baseline.buckets.find(b=>b.id==='labor');
+document.getElementById('insights').innerHTML = `
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">Dominant cost bucket</div>
+      <div style="font-size:12px;color:var(--text2)">${topBucket.name} at ${AC.fmt$(topBucket.cost)} (${(topBucket.cost/total*100).toFixed(1)}%) drives the most value in negotiation.</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:4px">Material as % of total</div>
+      <div style="font-size:12px;color:var(--text2)">Material at ${(matBucket.cost/total*100).toFixed(1)}% — commodity indices (ICIS/LME) directly impact this bucket. Monitor monthly.</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--amber)">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px">Mexico labor advantage</div>
+      <div style="font-size:12px;color:var(--text2)">Labor at ${(laborBucket.cost/total*100).toFixed(1)}% reflects $4.32/hr loaded Mexico rate vs $27/hr US. CONASAMI increases 10%+ annually — factor into LTA.</div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--purple)">
+      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px">Negotiation target</div>
+      <div style="font-size:12px;color:var(--text2)">Should cost + 3% buffer = <strong style="color:var(--accent)">${AC.fmt$(total*1.03)}</strong> target. Walkaway at ${AC.fmt$(total*1.08)}. Any quote above ${AC.fmt$(total*1.20)} triggers re-source evaluation.</div>
+    </div>
+  </div>
+`;
+</script>
+</body>
+</html>

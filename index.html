@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoCost Pro — Automotive Sourcing Platform</title>
+<link rel="stylesheet" href="css/main.css">
+<style>
+.hero{padding:48px 0 32px;border-bottom:1px solid var(--border);}
+.hero-eyebrow{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+.hero-title{font-family:'Syne',sans-serif;font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:12px;}
+.hero-title .dim{color:var(--text3);}
+.hero-desc{font-size:14px;color:var(--text2);max-width:560px;line-height:1.6;}
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:28px;}
+.module-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;text-decoration:none;display:block;transition:all .2s;position:relative;overflow:hidden;}
+.module-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.module-card:hover{border-color:var(--border3);transform:translateY(-2px);}
+.module-card.m1::before{background:linear-gradient(90deg,var(--accent),transparent);}
+.module-card.m2::before{background:linear-gradient(90deg,var(--accent2),transparent);}
+.module-card.m3::before{background:linear-gradient(90deg,var(--amber),transparent);}
+.module-card.m4::before{background:linear-gradient(90deg,var(--purple),transparent);}
+.module-card.m5::before{background:linear-gradient(90deg,var(--pink),transparent);}
+.module-num{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:12px;}
+.module-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px;}
+.module-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:16px;}
+.module-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.tag{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:4px;background:var(--bg4);color:var(--text3);}
+.module-arrow{position:absolute;top:20px;right:20px;width:28px;height:28px;border-radius:50%;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text3);transition:all .2s;}
+.module-card:hover .module-arrow{border-color:var(--accent);color:var(--accent);}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:28px;}
+.stat-mini{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.stat-mini-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+.stat-mini-val{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-.5px;}
+.about-section{margin-top:32px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px;}
+.about-item{display:flex;gap:12px;}
+.about-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.about-item-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;margin-bottom:4px;}
+.about-item-desc{font-size:12px;color:var(--text2);line-height:1.5;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-mark">AC</div>
+    <div class="nav-logo-text">Auto<span>Cost</span> Pro</div>
+  </a>
+  <div class="nav-links">
+    <a href="index.html" class="nav-link active"><span class="nav-num">00</span>Dashboard</a>
+    <a href="should-cost.html" class="nav-link"><span class="nav-num">01</span>Should Cost</a>
+    <a href="rfq-compare.html" class="nav-link"><span class="nav-num">02</span>RFQ Compare</a>
+    <a href="checklist.html" class="nav-link"><span class="nav-num">03</span>Supplier Scorecard</a>
+    <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
+    <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
+  </div>
+  <div class="nav-badge"><div class="pulse"></div>LIVE DEMO</div>
+</nav>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-eyebrow">Automotive Sourcing Intelligence Platform</div>
+    <div class="hero-title">
+      Should Cost.<br>
+      <span class="dim">RFQ. Negotiate. Track.</span>
+    </div>
+    <div class="hero-desc">
+      A complete sourcing management platform built on first-principles cost engineering.
+      From should cost baseline through supplier selection, live price tracking,
+      and full revision history — every tool an automotive SCM needs in one place.
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="module-grid" style="margin-top:28px">
+
+    <a href="should-cost.html" class="module-card m1">
+      <div class="module-arrow">→</div>
+      <div class="module-num">MODULE 01</div>
+      <div class="module-title" style="color:var(--accent)">Should Cost Baseline</div>
+      <div class="module-desc">
+        Bottom-up cost model built at program award and frozen as the reference point forever.
+        10 cost buckets, 60+ line items, every formula traceable to a named data source.
+        Material through supplier margin — built from first principles.
+      </div>
+      <div class="module-tags">
+        <span class="tag">10 buckets</span>
+        <span class="tag">60+ line items</span>
+        <span class="tag">ICIS/LME/BLS</span>
+        <span class="tag">Frozen baseline</span>
+      </div>
+    </a>
+
+    <a href="rfq-compare.html" class="module-card m2">
+      <div class="module-arrow">→</div>
+      <div class="module-num">MODULE 02</div>
+      <div class="module-title" style="color:var(--accent2)">RFQ Supplier Comparison</div>
+      <div class="module-desc">
+        Compare up to 3 supplier quotes against the should cost baseline.
+        Auto-normalization for Incoterms and payment terms. Color-coded line-by-line
+        gap analysis. Immediate view of which lines to negotiate on each supplier.
+      </div>
+      <div class="module-tags">
+        <span class="tag">3 supplier compare</span>
+        <span class="tag">Auto normalize</span>
+        <span class="tag">Color coded</span>
+        <span class="tag">Negotiation targets</span>
+      </div>
+    </a>
+
+    <a href="checklist.html" class="module-card m5">
+      <div class="module-arrow">→</div>
+      <div class="module-num">MODULE 03</div>
+      <div class="module-title" style="color:var(--pink)">Supplier Selection Scorecard</div>
+      <div class="module-desc">
+        Weighted scoring across 5 dimensions — Commercial, Quality, Technical,
+        Delivery, Financial. 28 criteria, 7 automatic disqualifiers. Score all
+        three suppliers and get an auto-generated award recommendation.
+      </div>
+      <div class="module-tags">
+        <span class="tag">5 dimensions</span>
+        <span class="tag">28 criteria</span>
+        <span class="tag">7 disqualifiers</span>
+        <span class="tag">Auto recommend</span>
+      </div>
+    </a>
+
+    <a href="live-tracker.html" class="module-card m3">
+      <div class="module-arrow">→</div>
+      <div class="module-num">MODULE 04</div>
+      <div class="module-title" style="color:var(--amber)">Live Price Tracker & Simulation</div>
+      <div class="module-desc">
+        Update material indices, enter ECN impacts, model tariff changes.
+        See instantly how each change flows through to total piece price.
+        Scenario simulation — what if PP goes up 15%? What if a tariff hits?
+      </div>
+      <div class="module-tags">
+        <span class="tag">7 live indices</span>
+        <span class="tag">ECN tracking</span>
+        <span class="tag">Tariff simulation</span>
+        <span class="tag">Target vs actual</span>
+      </div>
+    </a>
+
+    <a href="history.html" class="module-card m4" style="grid-column:1/-1">
+      <div class="module-arrow">→</div>
+      <div class="module-num">MODULE 05</div>
+      <div class="module-title" style="color:var(--purple)">Price History & Revision Tracker</div>
+      <div class="module-desc">
+        Every price change recorded as a numbered revision — APR, ECN, index adjustment, renegotiation.
+        Full audit trail with reason codes. Price trend chart from baseline through current.
+        Complete commercial history of the program.
+      </div>
+      <div class="module-tags">
+        <span class="tag">Full audit trail</span>
+        <span class="tag">Revision numbering</span>
+        <span class="tag">Trend chart</span>
+        <span class="tag">Reason codes</span>
+        <span class="tag">APR tracking</span>
+        <span class="tag">ECN log</span>
+      </div>
+    </a>
+
+  </div>
+
+  <div class="about-section">
+    <div class="section-label">About this platform</div>
+    <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--text)">
+      Built on the should cost methodology used in Tier 1 automotive sourcing
+    </div>
+    <div class="about-grid">
+      <div class="about-item">
+        <div class="about-icon" style="background:var(--accent-dim)">🎯</div>
+        <div>
+          <div class="about-item-title">First-principles cost engineering</div>
+          <div class="about-item-desc">Every line item calculated from raw inputs — material weight × commodity price ÷ utilization factor. Machine rate × cycle time ÷ OEE. No black boxes.</div>
+        </div>
+      </div>
+      <div class="about-item">
+        <div class="about-icon" style="background:var(--accent2-dim)">📊</div>
+        <div>
+          <div class="about-item-title">Live market data sources</div>
+          <div class="about-item-desc">PP resin via ICIS. Steel via Fastmarkets. Zinc and copper via LME. Mexico labor via IMSS/CONASAMI. US labor via BLS OEWS. Freight via DAT.</div>
+        </div>
+      </div>
+      <div class="about-item">
+        <div class="about-icon" style="background:var(--amber-dim)">⚖️</div>
+        <div>
+          <div class="about-item-title">Commercial framework</div>
+          <div class="about-item-desc">RFQ normalization for Incoterms and payment terms. LTA APR tracking. Material index passthrough calculation. ECN cost impact quantification.</div>
+        </div>
+      </div>
+      <div class="about-item">
+        <div class="about-icon" style="background:var(--purple-dim)">🔍</div>
+        <div>
+          <div class="about-item-title">Negotiation intelligence</div>
+          <div class="about-item-desc">Gap vs should cost by bucket. Sensitivity analysis showing which inputs move cost most. BATNA calculation. Walkaway point. 5-step negotiation script.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/data.js"></script>
+<script>
+const baseline = AC.getBaseline();
+const quotes = AC.getQuotes();
+const history = AC.getHistory();
+
+const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+const s1Total = quotes.S1?.totalPiecePrice || 0;
+const gap = s1Total - baseTotal;
+const latestRev = history[history.length-1];
+
+document.getElementById('statsRow').innerHTML = `
+  <div class="stat-mini kpi accent">
+    <div class="stat-mini-label">Should Cost Baseline</div>
+    <div class="stat-mini-val accent">${AC.fmt$(baseTotal)}</div>
+    <div class="kpi-sub">Frozen at program award</div>
+  </div>
+  <div class="stat-mini kpi blue">
+    <div class="stat-mini-label">Awarded Price</div>
+    <div class="stat-mini-val blue">${AC.fmt$(s1Total)}</div>
+    <div class="kpi-sub">Supplier A — DDP Net 60</div>
+  </div>
+  <div class="stat-mini kpi ${gap>0?'red':'green'}">
+    <div class="stat-mini-label">Gap vs Should Cost</div>
+    <div class="stat-mini-val ${gap>0?'red':'green'}">${gap>=0?'+':''}${AC.fmt$(gap)}</div>
+    <div class="kpi-sub">${AC.fmt%((gap/baseTotal)*100)} above baseline</div>
+  </div>
+  <div class="stat-mini kpi purple">
+    <div class="stat-mini-label">Current Price (Rev ${latestRev.rev})</div>
+    <div class="stat-mini-val purple">${AC.fmt$(latestRev.price)}</div>
+    <div class="kpi-sub">${latestRev.label}</div>
+  </div>
+`;
+</script>
+</body>
+</html>
