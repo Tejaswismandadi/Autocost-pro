@@ -6,17 +6,14 @@
 <title>Should Cost Baseline — AutoCost Pro</title>
 <link rel="stylesheet" href="main.css">
 <style>
-.bucket-row{cursor:pointer;user-select:none;}
-.bucket-row td{font-weight:500;}
-.bucket-row:hover td{filter:brightness(1.1);}
-.item-row td{padding:7px 12px;font-size:11px;}
-.item-row{display:none;}
-.item-row.visible{display:table-row;}
-.bucket-toggle{font-size:10px;color:var(--text3);transition:transform .2s;}
-.bucket-open .bucket-toggle{transform:rotate(90deg);}
-.bar-cell{width:120px;}
-.bar-mini{height:4px;border-radius:2px;}
-.lock-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;background:var(--amber-dim);color:var(--amber);font-family:'DM Mono',monospace;font-size:10px;border:1px solid rgba(245,158,11,.2);}
+.bucket-header{cursor:pointer;user-select:none;background:var(--bg4);padding:10px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:28px 1fr 80px 100px 80px 80px;gap:8px;align-items:center;transition:background .15s;}
+.bucket-header:hover{background:var(--bg5);}
+.bucket-items{display:none;}
+.bucket-items.open{display:block;}
+.item-row{display:grid;grid-template-columns:28px 1fr 160px 140px 80px 80px 80px;gap:8px;align-items:center;padding:7px 16px;border-bottom:1px solid var(--border);font-size:11px;}
+.item-row:last-child{border-bottom:none;}
+.lock-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--amber-dim);color:var(--amber);font-family:'DM Mono',monospace;font-size:10px;border:1px solid rgba(245,158,11,.2);}
+.bar{height:4px;border-radius:2px;display:inline-block;}
 </style>
 </head>
 <body>
@@ -39,183 +36,174 @@
       <div class="page-title">Should Cost <span class="accent">Baseline</span></div>
       <div class="page-subtitle">Built at program award — frozen as permanent reference. Never changes.</div>
     </div>
-    <div class="lock-badge">🔒 FROZEN — Program Award Date: Jan 15, 2024</div>
+    <div class="lock-badge">FROZEN — Program Award Date: Jan 15, 2024</div>
   </div>
 
-  <div class="kpi-grid" id="kpiRow"></div>
+  <div class="kpi-grid" id="kpiRow">
+    <div class="kpi accent"><div class="kpi-label">Loading...</div><div class="kpi-value accent">—</div></div>
+  </div>
 
   <div class="card mt-16">
     <div class="card-header">
-      <div class="card-title">📋 Cost Breakdown — All 10 Buckets</div>
-      <div style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace">Click any bucket to expand line items</div>
+      <div class="card-title">Cost Breakdown — All 10 Buckets</div>
+      <div style="font-size:11px;color:var(--text3)">Click any bucket row to expand line items</div>
     </div>
-    <div class="tbl-wrap">
-      <table id="mainTable">
-        <thead>
-          <tr>
-            <th style="width:24px"></th>
-            <th>COST BUCKET / LINE ITEM</th>
-            <th>CALCULATION BASIS</th>
-            <th>DATA SOURCE</th>
-            <th style="width:120px">DISTRIBUTION</th>
-            <th style="text-align:right">$/PART</th>
-            <th style="text-align:right">% TOTAL</th>
-            <th style="text-align:right">$/YEAR</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
-    </div>
+    <div id="bucketsContainer"></div>
   </div>
 
   <div class="grid-2 mt-16">
     <div class="card">
-      <div class="card-header"><div class="card-title">📊 Cost Structure</div></div>
-      <div class="card-body" id="structureViz"></div>
+      <div class="card-header"><div class="card-title">Cost Structure</div></div>
+      <div class="card-body" id="structViz"></div>
     </div>
     <div class="card">
-      <div class="card-header"><div class="card-title">💡 Key Insights</div></div>
-      <div class="card-body" id="insights"></div>
+      <div class="card-header"><div class="card-title">Key Insights</div></div>
+      <div class="card-body" id="insightsBox"></div>
     </div>
   </div>
 </div>
 
 <script src="data.js"></script>
 <script>
-const baseline = AC.getBaseline();
-const total = baseline.buckets.reduce((s,b)=>s+b.cost,0);
-const vol = baseline.annualVolume;
+window.onload = function() {
+  try {
+    var baseline = AC.getBaseline();
+    var buckets = baseline.buckets;
+    var vol = baseline.annualVolume;
+    var programLife = baseline.programLife;
+    
+    // Calculate total
+    var total = 0;
+    for(var i=0; i<buckets.length; i++) {
+      total += buckets[i].cost;
+    }
+    total = parseFloat(total.toFixed(2));
 
-// KPIs
-document.getElementById('kpiRow').innerHTML = `
-  <div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">${AC.fmtDollar(total)}</div><div class="kpi-sub">per unit — frozen baseline</div></div>
-  <div class="kpi blue"><div class="kpi-label">Annual Cost</div><div class="kpi-value blue">${AC.fmtK(total*vol)}</div><div class="kpi-sub">at ${(vol/1000).toFixed(0)}K units/year</div></div>
-  <div class="kpi purple"><div class="kpi-label">Program Life Cost</div><div class="kpi-value purple">${AC.fmtK(total*vol*baseline.programLife)}</div><div class="kpi-sub">over ${baseline.programLife} years</div></div>
-  <div class="kpi green"><div class="kpi-label">Buckets</div><div class="kpi-value green">10</div><div class="kpi-sub">cost categories</div></div>
-  <div class="kpi amber"><div class="kpi-label">Line Items</div><div class="kpi-value amber">60+</div><div class="kpi-sub">individual cost lines</div></div>
-`;
+    // KPIs
+    var kpiDiv = document.getElementById('kpiRow');
+    kpiDiv.innerHTML = 
+      '<div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">$' + total.toFixed(2) + '</div><div class="kpi-sub">per unit — frozen baseline</div></div>' +
+      '<div class="kpi blue"><div class="kpi-label">Annual Cost</div><div class="kpi-value blue">$' + Math.round(total*vol/1000) + 'K</div><div class="kpi-sub">at ' + Math.round(vol/1000) + 'K units/year</div></div>' +
+      '<div class="kpi purple"><div class="kpi-label">Program Life Cost</div><div class="kpi-value purple">$' + Math.round(total*vol*programLife/1000000) + 'M</div><div class="kpi-sub">over ' + programLife + ' years</div></div>' +
+      '<div class="kpi green"><div class="kpi-label">Buckets</div><div class="kpi-value green">10</div><div class="kpi-sub">cost categories</div></div>' +
+      '<div class="kpi amber"><div class="kpi-label">Line Items</div><div class="kpi-value amber">60+</div><div class="kpi-sub">individual cost lines</div></div>';
 
-// Table
-const tbody = document.getElementById('tableBody');
-baseline.buckets.forEach((bucket,bi) => {
-  const pct = (bucket.cost/total*100).toFixed(1);
-  const tr = document.createElement('tr');
-  tr.className = 'bucket-row';
-  tr.id = 'bucket-'+bi;
-  tr.innerHTML = `
-    <td style="color:var(--text3);text-align:center"><span class="bucket-toggle">▶</span></td>
-    <td class="bold" style="color:${bucket.color}">${String(bi+1).padStart(2,'0')} — ${bucket.name}</td>
-    <td style="color:var(--text3);font-size:11px">${bucket.items.length} line items</td>
-    <td></td>
-    <td class="bar-cell"><div class="bar-mini" style="width:${Math.min(pct*2.2,100)}%;background:${bucket.color}"></div></td>
-    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmtDollar(bucket.cost)}</td>
-    <td class="mono" style="text-align:right">${pct}%</td>
-    <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
-  `;
-  tr.onclick = () => toggleBucket(bi);
-  tbody.appendChild(tr);
+    // Buckets
+    var container = document.getElementById('bucketsContainer');
+    var html = '';
+    
+    for(var bi=0; bi<buckets.length; bi++) {
+      var bucket = buckets[bi];
+      var pct = (bucket.cost/total*100).toFixed(1);
+      var barW = Math.min(parseFloat(pct)*2.5, 100);
+      
+      html += '<div>';
+      html += '<div class="bucket-header" onclick="toggleBucket(' + bi + ')" id="bh-' + bi + '">';
+      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + bucket.color + '">' + (bi<9?'0':'') + (bi+1) + '</span>';
+      html += '<span style="font-family:Syne,sans-serif;font-weight:600;color:' + bucket.color + '">' + bucket.name + '</span>';
+      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text3)">' + bucket.items.length + ' items</span>';
+      html += '<div><div class="bar" style="width:' + barW + 'px;background:' + bucket.color + ';height:4px"></div></div>';
+      html += '<span style="font-family:DM Mono,monospace;font-size:13px;font-weight:500;color:' + bucket.color + ';text-align:right">$' + bucket.cost.toFixed(2) + '</span>';
+      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text3);text-align:right">' + pct + '%</span>';
+      html += '</div>';
+      
+      html += '<div class="bucket-items" id="bi-' + bi + '">';
+      // Column header
+      html += '<div class="item-row" style="background:var(--bg4);font-family:DM Mono,monospace;font-size:10px;color:var(--text3)">';
+      html += '<span></span><span>ITEM</span><span>BASIS</span><span>SOURCE</span><span style="text-align:right">$/PART</span><span style="text-align:right">% TOTAL</span><span style="text-align:right">$/YEAR</span></div>';
+      
+      for(var ii=0; ii<bucket.items.length; ii++) {
+        var item = bucket.items[ii];
+        var itemPct = (item.cost/total*100).toFixed(2);
+        var itemYear = Math.round(item.cost*vol/1000);
+        html += '<div class="item-row">';
+        html += '<span></span>';
+        html += '<span style="color:var(--text2)">' + item.name + '</span>';
+        html += '<span style="color:var(--text3)">' + item.basis + '</span>';
+        html += '<span style="color:var(--text3)">' + item.source + '</span>';
+        html += '<span style="font-family:DM Mono,monospace;text-align:right">$' + item.cost.toFixed(3) + '</span>';
+        html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">' + itemPct + '%</span>';
+        html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">$' + itemYear + 'K</span>';
+        html += '</div>';
+      }
+      
+      // Subtotal
+      html += '<div class="item-row" style="border-top:1px solid var(--border2);background:var(--bg3)">';
+      html += '<span></span>';
+      html += '<span style="font-weight:600;color:' + bucket.color + '">SUBTOTAL — ' + bucket.name + '</span>';
+      html += '<span></span><span></span>';
+      html += '<span style="font-family:DM Mono,monospace;text-align:right;font-weight:600;color:' + bucket.color + '">$' + bucket.cost.toFixed(2) + '</span>';
+      html += '<span style="font-family:DM Mono,monospace;text-align:right;color:' + bucket.color + '">' + pct + '%</span>';
+      html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">$' + Math.round(bucket.cost*vol/1000) + 'K</span>';
+      html += '</div>';
+      
+      html += '</div></div>'; // close bucket-items and bucket div
+    }
+    
+    // Grand total
+    html += '<div style="background:var(--bg4);border-top:2px solid var(--border2);padding:12px 16px;display:grid;grid-template-columns:28px 1fr 80px 100px 80px 80px;gap:8px;align-items:center">';
+    html += '<span></span>';
+    html += '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--accent)">SHOULD COST — GRAND TOTAL</span>';
+    html += '<span></span><span></span>';
+    html += '<span style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--accent);text-align:right">$' + total.toFixed(2) + '</span>';
+    html += '<span style="font-family:DM Mono,monospace;color:var(--accent);text-align:right">100%</span>';
+    html += '</div>';
+    
+    container.innerHTML = html;
 
-  bucket.items.forEach((item,ii) => {
-    const itr = document.createElement('tr');
-    itr.className = 'item-row';
-    itr.id = `item-${bi}-${ii}`;
-    itr.style.background = bi%2===0?'rgba(0,0,0,.15)':'rgba(0,0,0,.08)';
-    itr.innerHTML = `
-      <td></td>
-      <td style="padding-left:28px;color:var(--text2)">${item.name}</td>
-      <td style="color:var(--text3)">${item.basis}</td>
-      <td style="color:var(--text3)">${item.source}</td>
-      <td></td>
-      <td class="mono" style="text-align:right">${AC.fmtDollar(item.cost,3)}</td>
-      <td class="mono" style="text-align:right;color:var(--text3)">${(item.cost/total*100).toFixed(2)}%</td>
-      <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(item.cost*vol)}</td>
-    `;
-    tbody.appendChild(itr);
-  });
+    // Cost structure viz
+    var sv = document.getElementById('structViz');
+    var svHtml = '';
+    for(var si=0; si<buckets.length; si++) {
+      var sb = buckets[si];
+      var sp = (sb.cost/total*100).toFixed(1);
+      svHtml += '<div style="margin-bottom:10px">';
+      svHtml += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
+      svHtml += '<span style="font-size:12px;color:var(--text2)">' + sb.name + '</span>';
+      svHtml += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + sb.color + '">$' + sb.cost.toFixed(2) + ' - ' + sp + '%</span>';
+      svHtml += '</div>';
+      svHtml += '<div class="progress-wrap"><div class="progress-bar" style="width:' + Math.min(parseFloat(sp)*2.5,100) + '%;background:' + sb.color + '"></div></div>';
+      svHtml += '</div>';
+    }
+    sv.innerHTML = svHtml;
 
-  // Subtotal row
-  const str = document.createElement('tr');
-  str.id = `sub-${bi}`;
-  str.className = 'item-row';
-  str.style.cssText = 'border-top:1px solid var(--border2);';
-  str.innerHTML = `
-    <td></td>
-    <td style="padding-left:28px;font-weight:600;color:${bucket.color};font-size:11px">SUBTOTAL — ${bucket.name}</td>
-    <td colspan="2"></td>
-    <td></td>
-    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmtDollar(bucket.cost)}</td>
-    <td class="mono bold" style="text-align:right;color:${bucket.color}">${pct}%</td>
-    <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
-  `;
-  tbody.appendChild(str);
-});
+    // Insights
+    var target = (total * 1.03).toFixed(2);
+    var walkaway = (total * 1.08).toFixed(2);
+    var matBucket = null;
+    var laborBucket = null;
+    for(var ki=0; ki<buckets.length; ki++) {
+      if(buckets[ki].id === 'mat') matBucket = buckets[ki];
+      if(buckets[ki].id === 'labor') laborBucket = buckets[ki];
+    }
+    
+    document.getElementById('insightsBox').innerHTML = 
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">' +
+      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">Material dominates at ' + (matBucket ? (matBucket.cost/total*100).toFixed(1) : '?') + '%</div>' +
+      '<div style="font-size:12px;color:var(--text2)">Monitor ICIS polymer indices monthly. PP and foam are the top two material cost drivers.</div>' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--amber)">' +
+      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px">Mexico labor at ' + (laborBucket ? (laborBucket.cost/total*100).toFixed(1) : '?') + '%</div>' +
+      '<div style="font-size:12px;color:var(--text2)">$4.32/hr loaded vs $27/hr US. CONASAMI increases 10%+ annually. Factor into LTA structure.</div>' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">' +
+      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px">Negotiation targets</div>' +
+      '<div style="font-size:12px;color:var(--text2)">Target: <strong style="color:var(--accent)">$' + target + '</strong> (should cost +3%). Walkaway: $' + walkaway + ' (+8%). Any quote above $' + (total*1.20).toFixed(2) + ' triggers re-source evaluation.</div>' +
+      '</div>' +
+      '</div>';
 
-// Grand total
-const gtr = document.createElement('tr');
-gtr.style.cssText='background:var(--bg4);border-top:2px solid var(--border2)';
-gtr.innerHTML = `
-  <td></td>
-  <td style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent)">SHOULD COST — GRAND TOTAL</td>
-  <td colspan="2" style="color:var(--text3);font-size:11px">Baseline locked Jan 15, 2024</td>
-  <td></td>
-  <td class="mono" style="text-align:right;font-size:15px;font-weight:700;color:var(--accent)">${AC.fmtDollar(total)}</td>
-  <td class="mono" style="text-align:right;color:var(--accent)">100%</td>
-  <td class="mono" style="text-align:right;color:var(--accent)">${AC.fmtK(total*vol)}/yr</td>
-`;
-tbody.appendChild(gtr);
+  } catch(e) {
+    document.getElementById('kpiRow').innerHTML = '<div style="color:red;padding:20px">JavaScript Error: ' + e.message + '<br>' + e.stack + '</div>';
+  }
+};
 
 function toggleBucket(bi) {
-  const row = document.getElementById('bucket-'+bi);
-  const isOpen = row.classList.contains('bucket-open');
-  row.classList.toggle('bucket-open', !isOpen);
-  const bucket = baseline.buckets[bi];
-  bucket.items.forEach((_,ii) => {
-    const el = document.getElementById(`item-${bi}-${ii}`);
-    if(el) el.classList.toggle('visible', !isOpen);
-  });
-  const sub = document.getElementById(`sub-${bi}`);
-  if(sub) sub.classList.toggle('visible', !isOpen);
+  var items = document.getElementById('bi-' + bi);
+  if(!items) return;
+  var isOpen = items.classList.contains('open');
+  items.classList.toggle('open', !isOpen);
 }
-
-// Structure viz
-const sv = document.getElementById('structureViz');
-sv.innerHTML = baseline.buckets.map(b=>{
-  const pct = (b.cost/total*100).toFixed(1);
-  return `
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:12px;color:var(--text2)">${b.name}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${b.color}">${AC.fmtDollar(b.cost)} · ${pct}%</span>
-      </div>
-      <div class="progress-wrap"><div class="progress-bar" style="width:${pct*2}%;background:${b.color}"></div></div>
-    </div>
-  `;
-}).join('');
-
-// Insights
-const topBucket = [...baseline.buckets].sort((a,b)=>b.cost-a.cost)[0];
-const matBucket = baseline.buckets.find(b=>b.id==='mat');
-const laborBucket = baseline.buckets.find(b=>b.id==='labor');
-document.getElementById('insights').innerHTML = `
-  <div style="display:flex;flex-direction:column;gap:10px">
-    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">Dominant cost bucket</div>
-      <div style="font-size:12px;color:var(--text2)">${topBucket.name} at ${AC.fmtDollar(topBucket.cost)} (${(topBucket.cost/total*100).toFixed(1)}%) drives the most value in negotiation.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:4px">Material as % of total</div>
-      <div style="font-size:12px;color:var(--text2)">Material at ${(matBucket.cost/total*100).toFixed(1)}% — commodity indices (ICIS/LME) directly impact this bucket. Monitor monthly.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--amber)">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px">Mexico labor advantage</div>
-      <div style="font-size:12px;color:var(--text2)">Labor at ${(laborBucket.cost/total*100).toFixed(1)}% reflects $4.32/hr loaded Mexico rate vs $27/hr US. CONASAMI increases 10%+ annually — factor into LTA.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--purple)">
-      <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px">Negotiation target</div>
-      <div style="font-size:12px;color:var(--text2)">Should cost + 3% buffer = <strong style="color:var(--accent)">${AC.fmtDollar(total*1.03)}</strong> target. Walkaway at ${AC.fmtDollar(total*1.08)}. Any quote above ${AC.fmtDollar(total*1.20)} triggers re-source evaluation.</div>
-    </div>
-  </div>
-`;
 </script>
 </body>
 </html>
