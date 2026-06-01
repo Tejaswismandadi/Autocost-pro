@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Live Tracker — AutoCost Pro</title>
-<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="main.css">
 <style>
 .index-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;transition:border-color .2s;}
 .index-card:hover{border-color:var(--border3);}
@@ -111,7 +111,7 @@
   </div>
 </div>
 
-<script src="js/data.js"></script>
+<script src="data.js"></script>
 <script>
 const baseline = AC.getBaseline();
 const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
