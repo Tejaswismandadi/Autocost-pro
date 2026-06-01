@@ -1,7 +1,7 @@
 // AutoCost Pro — Shared Data Store
 // All data persists in localStorage
 
-const AC = {
+var AC = {
 
   // ── SHOULD COST BASELINE (frozen at program start) ──────────────────────
   defaultBaseline: {
