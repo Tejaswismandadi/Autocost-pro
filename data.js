@@ -29,7 +29,7 @@ const AC = {
           {name:"Fasteners and clips ×18",     cost:1.44, basis:"18pcs × $0.08",              source:"Catalogue pricing"},
           {name:"Material scrap 7%",           cost:2.05, basis:"7% on manufactured components",source:"Industry benchmark"},
         ]
-      },
+  },
       { id:"proc", name:"Process Cost",             cost:12.97, pct:12.4, color:"#0099ff",
         items:[
           {name:"Main structure mold 800T",    cost:0.84, basis:"$55/hr ÷ 3600 × 47s ÷ 78%OEE",source:"Machine rate benchmark"},
@@ -41,7 +41,7 @@ const AC = {
           {name:"Die cut trimming",            cost:0.24, basis:"$35/hr ÷ 3600 × 45s ÷ 80%",   source:"Machine rate"},
           {name:"Material drying PP+GF30",     cost:0.06, basis:"8kW × $0.08 × 3hr ÷ 33 parts",source:"CFE tariff"},
         ]
-      },
+  },
       { id:"labor",name:"Direct Labor",             cost:4.45, pct:4.2,  color:"#a855f7",
         items:[
           {name:"Press operator 1 op",         cost:0.06, basis:"$4.32/hr × 47s ÷ 3600",       source:"INEGI/IMSS"},
@@ -53,7 +53,7 @@ const AC = {
           {name:"Indirect labor allocation",   cost:0.34, basis:"4.2 indirect × $4.32 × 7.5hr ÷ 400 parts",source:"Industry benchmark"},
           {name:"Statutory burden 35%",        cost:0.11, basis:"Already in loaded rate above", source:"IMSS 2026 table"},
         ]
-      },
+  },
       { id:"ovhd", name:"Manufacturing Overhead",   cost:9.55, pct:9.1,  color:"#f59e0b",
         items:[
           {name:"Equipment depreciation",      cost:1.85, basis:"$750K ÷ 10yr ÷ 4000hr × cycle",source:"Capex benchmark"},
@@ -67,7 +67,7 @@ const AC = {
           {name:"PPAP APQP launch burden",     cost:0.45, basis:"$45K ÷ 100K units",             source:"Program benchmark"},
           {name:"Scrap and rework provision",  cost:1.31, basis:"2.5% of material+process+labor",source:"Industry benchmark"},
         ]
-      },
+  },
       { id:"sga",  name:"SG&A",                    cost:7.21, pct:6.9,  color:"#ef4444",
         items:[
           {name:"Sales and commercial",        cost:1.80, basis:"2% of mfg cost",               source:"IBISWorld SIC 3714"},
@@ -76,7 +76,7 @@ const AC = {
           {name:"R&D product development",     cost:0.70, basis:"0.8% of mfg cost",             source:"PwC auto benchmark"},
           {name:"Executive overhead plant",    cost:0.91, basis:"1% of mfg cost",               source:"Plant level only"},
         ]
-      },
+  },
       { id:"logi", name:"Logistics & Packaging",    cost:6.15, pct:5.9,  color:"#06b6d4",
         items:[
           {name:"Outbound freight",            cost:2.20, basis:"Mexico to Fremont per unit",   source:"DAT freight index"},
@@ -86,7 +86,7 @@ const AC = {
           {name:"Import duties USMCA",         cost:0.60, basis:"USMCA qualifying 0-2.5%",     source:"CBP tariff schedule"},
           {name:"Reverse logistics warranty",  cost:0.14, basis:"0.4% returns × $35 handling", source:"Industry benchmark"},
         ]
-      },
+  },
       { id:"tool", name:"Tooling Amortization",     cost:5.32, pct:5.1,  color:"#84cc16",
         items:[
           {name:"Main housing mold complex",   cost:0.40, basis:"$200K ÷ 500K lifetime units", source:"Tooling should cost"},
@@ -96,7 +96,7 @@ const AC = {
           {name:"Assembly fixtures gauges",    cost:0.11, basis:"$55K ÷ 500K units",           source:"Tooling should cost"},
           {name:"ECN tooling reserve",         cost:0.25, basis:"$25K/yr ÷ 100K units",        source:"ECN history estimate"},
         ]
-      },
+  },
       { id:"test", name:"Testing & Compliance",     cost:2.86, pct:2.7,  color:"#f97316",
         items:[
           {name:"FMVSS 302 flammability",      cost:0.05, basis:"$1800 × 3 subs ÷ 100K",      source:"Intertek fee schedule"},
@@ -108,7 +108,7 @@ const AC = {
           {name:"EMC USB charger FCC",         cost:0.05, basis:"$4500 ÷ 100K units",          source:"FCC lab fee"},
           {name:"REACH RoHS compliance",       cost:0.01, basis:"$800 ÷ 100K units",           source:"Compliance cost"},
         ]
-      },
+  },
       { id:"hidn", name:"Hidden Costs",             cost:5.10, pct:4.9,  color:"#ec4899",
         items:[
           {name:"Payment terms financing",     cost:0.85, basis:"Piece price × 10% × 60/365", source:"Working capital model"},
@@ -119,16 +119,13 @@ const AC = {
           {name:"Program mgmt overhead",       cost:0.80, basis:"Launch team allocation",      source:"NRE estimate"},
           {name:"Inflation buffer",            cost:0.60, basis:"~1% forward pricing risk",    source:"Industry practice"},
         ]
-      },
+  },
       { id:"mrgn", name:"Supplier Margin",          cost:5.24, pct:5.0,  color:"#6366f1",
         items:[
           {name:"Gross margin Tier1 trim",     cost:5.24, basis:"5% × pre-margin cost",        source:"Adient/Lear 10-K"},
         ]
-      },
+  },
     ],
-    get total() {
-      return this.buckets.reduce((s,b) => s + b.cost, 0);
-    }
   },
 
   // ── MATERIAL INDICES ─────────────────────────────────────────────────────
@@ -160,7 +157,7 @@ const AC = {
         {id:"tool", cost:6.10},{id:"test",  cost:3.20},{id:"hidn",  cost:7.80},
         {id:"mrgn", cost:5.70},
       ]
-    },
+},
     S2: {
       submittedDate:"2024-02-03", incoterms:"DDP", paymentTerms:"Net45",
       totalPiecePrice: 138.50,
@@ -170,7 +167,7 @@ const AC = {
         {id:"tool", cost:5.80},{id:"test",  cost:3.10},{id:"hidn",  cost:11.40},
         {id:"mrgn", cost:5.70},
       ]
-    },
+},
     S3: {
       submittedDate:"2024-02-02", incoterms:"FOB Shanghai", paymentTerms:"Net60",
       totalPiecePrice: 98.20,
@@ -183,7 +180,7 @@ const AC = {
         {id:"tool", cost:4.90},{id:"test",  cost:2.80},{id:"hidn",  cost:6.90},
         {id:"mrgn", cost:4.80},
       ]
-    }
+}
   },
 
   // ── PRICE HISTORY ─────────────────────────────────────────────────────────
@@ -211,7 +208,7 @@ const AC = {
           {id:"c5",name:"Incoterms compliance (DDP)",          maxScore:10, helpText:"DDP=10, DAP=7, FOB=4, EXW=0"},
           {id:"c6",name:"Total program cost TCO",              maxScore:10, helpText:"Lowest TCO=10, ranked vs other suppliers"},
         ]
-      },
+  },
       {
         id:"quality", name:"Quality", weight:25, color:"#a855f7",
         criteria:[
@@ -222,7 +219,7 @@ const AC = {
           {id:"q5",name:"Open corrective actions",             maxScore:10, helpText:"None=10, 1-2 minor=6, 3+ or major=0"},
           {id:"q6",name:"Quality systems maturity",            maxScore:10, helpText:"Assessed during site visit and audit"},
         ]
-      },
+  },
       {
         id:"technical", name:"Technical", weight:20, color:"#0099ff",
         criteria:[
@@ -233,7 +230,7 @@ const AC = {
           {id:"t5",name:"Tooling design build capability",     maxScore:10, helpText:"In-house tool design=10, Qualified external=7, Unknown=3"},
           {id:"t6",name:"Geographic fit with supply strategy", maxScore:10, helpText:"Preferred region=10, Acceptable=6, Outside strategy=2"},
         ]
-      },
+  },
       {
         id:"delivery", name:"Delivery & Execution", weight:15, color:"#f59e0b",
         criteria:[
@@ -244,7 +241,7 @@ const AC = {
           {id:"d5",name:"Supply chain risk profile",           maxScore:10, helpText:"Low risk=10, Medium=6, High=2"},
           {id:"d6",name:"Program management capability",       maxScore:10, helpText:"Dedicated PM team=10, Basic=6, None=2"},
         ]
-      },
+  },
       {
         id:"financial", name:"Financial & Strategic", weight:10, color:"#ec4899",
         criteria:[
@@ -254,7 +251,7 @@ const AC = {
           {id:"f4",name:"Tesla relationship history",          maxScore:10, helpText:"Strong existing=10, New qualified=6, Poor history=0"},
           {id:"f5",name:"Sub-supplier USMCA management",       maxScore:10, helpText:"Strong visibility=10, Adequate=6, Weak=2"},
         ]
-      }
+  }
     ],
     disqualifiers:[
       {id:"dq1",name:"No valid IATF 16949 certification"},
@@ -276,7 +273,7 @@ const AC = {
     try {
       const d = localStorage.getItem('ac_'+key);
       return d ? JSON.parse(d) : fallback;
-    } catch(e) { return fallback; }
+} catch(e) { return fallback; }
   },
 
   getBaseline()   { return this.load('baseline',   this.defaultBaseline); },
@@ -294,8 +291,8 @@ const AC = {
   saveScores(d)    { this.save('scores',    d); },
 
   // ── FORMATTING ────────────────────────────────────────────────────────────
-  fmt$: (v, dec=2) => v==null?'—':'$'+Number(v).toFixed(dec),
-  fmt%: (v, dec=1) => v==null?'—':Number(v).toFixed(dec)+'%',
+  fmtDollar: (v, dec=2) => v==null?'—':'$'+Number(v).toFixed(dec),
+  fmtPct: (v, dec=1) => v==null?'—':Number(v).toFixed(dec)+'%',
   fmtK: (v) => v==null?'—':'$'+Math.round(v/1000)+'K',
   fmtDate: (d) => d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—',
 

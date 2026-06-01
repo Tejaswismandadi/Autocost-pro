@@ -101,7 +101,7 @@ suppliers.forEach(s => { normTotals[s.id] = normalizedTotal(s.id); });
 
 // Summary KPIs
 const kpiHtml = `
-  <div class="kpi accent"><div class="kpi-label">Should Cost</div><div class="kpi-value accent">${AC.fmt$(baseTotal)}</div><div class="kpi-sub">Frozen baseline</div></div>
+  <div class="kpi accent"><div class="kpi-label">Should Cost</div><div class="kpi-value accent">${AC.fmtDollar(baseTotal)}</div><div class="kpi-sub">Frozen baseline</div></div>
   ${suppliers.map(s=>{
     const norm = normTotals[s.id];
     const gap = norm - baseTotal;
@@ -109,11 +109,11 @@ const kpiHtml = `
     const cls = gapPct<=3?'green':gapPct<=10?'amber':'red';
     return `<div class="kpi ${cls}">
       <div class="kpi-label">${s.name.split('—')[0].trim()}</div>
-      <div class="kpi-value ${cls}">${AC.fmt$(norm)}</div>
-      <div class="kpi-sub">${gap>=0?'+':''}${AC.fmt$(gap)} (${AC.fmt%(gapPct)}) vs baseline</div>
+      <div class="kpi-value ${cls}">${AC.fmtDollar(norm)}</div>
+      <div class="kpi-sub">${gap>=0?'+':''}${AC.fmtDollar(gap)} (${AC.fmtPct(gapPct)}) vs baseline</div>
     </div>`;
   }).join('')}
-  <div class="kpi blue"><div class="kpi-label">Best Quote</div><div class="kpi-value blue">${AC.fmt$(Math.min(...suppliers.map(s=>normTotals[s.id])))}</div><div class="kpi-sub">Normalized DDP Net60</div></div>
+  <div class="kpi blue"><div class="kpi-label">Best Quote</div><div class="kpi-value blue">${AC.fmtDollar(Math.min(...suppliers.map(s=>normTotals[s.id])))}</div><div class="kpi-sub">Normalized DDP Net60</div></div>
 `;
 document.getElementById('summaryKpis').innerHTML = kpiHtml;
 
@@ -150,7 +150,7 @@ baseline.buckets.forEach(bucket => {
     if(!sq) return '<td>—</td>';
     const cls = AC.cellClass(sq.cost, bucket.cost);
     const diff = AC.pctDiff(sq.cost, bucket.cost);
-    return `<td class="${cls} mono" style="text-align:right">${AC.fmt$(sq.cost)} <span style="font-size:9px">${diff>=0?'+':''}${diff.toFixed(1)}%</span></td>`;
+    return `<td class="${cls} mono" style="text-align:right">${AC.fmtDollar(sq.cost)} <span style="font-size:9px">${diff>=0?'+':''}${diff.toFixed(1)}%</span></td>`;
   }).join('');
 
   const bucketQuotes = suppliers.map(s => quotes[s.id]?.buckets.find(b=>b.id===bucket.id)?.cost||999);
@@ -160,9 +160,9 @@ baseline.buckets.forEach(bucket => {
 
   tr.innerHTML = `
     <td class="bold" style="color:${bucket.color}">${bucket.name}</td>
-    <td class="cell-base" style="text-align:right">${AC.fmt$(bucket.cost)}</td>
+    <td class="cell-base" style="text-align:right">${AC.fmtDollar(bucket.cost)}</td>
     ${supplierCells}
-    <td class="mono" style="text-align:right;color:${bestSupplier?.color}">${AC.fmt$(bestVal)}</td>
+    <td class="mono" style="text-align:right;color:${bestSupplier?.color}">${AC.fmtDollar(bestVal)}</td>
     <td style="text-align:center">${allAbove?'<span class="badge badge-warn">Negotiate</span>':'<span class="badge badge-good">Acceptable</span>'}</td>
   `;
   body.appendChild(tr);
@@ -174,15 +174,15 @@ totalTr.style.cssText = 'background:var(--bg4);font-weight:700;border-top:2px so
 const normNote = {S1:'DDP Net60',S2:'Normalized to Net60',S3:'Normalized to DDP Net60'};
 totalTr.innerHTML = `
   <td style="font-family:'Syne',sans-serif;font-size:13px;color:var(--accent)">TOTAL PIECE PRICE</td>
-  <td class="mono" style="text-align:right;color:var(--accent);font-size:14px">${AC.fmt$(baseTotal)}</td>
+  <td class="mono" style="text-align:right;color:var(--accent);font-size:14px">${AC.fmtDollar(baseTotal)}</td>
   ${suppliers.map(s=>{
     const norm = normTotals[s.id];
     const gap = norm-baseTotal;
     const gapPct = gap/baseTotal*100;
     const cls = gapPct<=3?'var(--green)':gapPct<=10?'var(--amber)':'var(--red)';
-    return `<td class="mono" style="text-align:right;color:${cls};font-size:13px">${AC.fmt$(norm)}<br><span style="font-size:9px;color:var(--text3)">${normNote[s.id]}</span></td>`;
+    return `<td class="mono" style="text-align:right;color:${cls};font-size:13px">${AC.fmtDollar(norm)}<br><span style="font-size:9px;color:var(--text3)">${normNote[s.id]}</span></td>`;
   }).join('')}
-  <td class="mono" style="text-align:right;color:var(--green)">${AC.fmt$(Math.min(...suppliers.map(s=>normTotals[s.id])))}</td>
+  <td class="mono" style="text-align:right;color:var(--green)">${AC.fmtDollar(Math.min(...suppliers.map(s=>normTotals[s.id])))}</td>
   <td></td>
 `;
 body.appendChild(totalTr);
@@ -197,7 +197,7 @@ gapTr.innerHTML = `
     const gap=normTotals[s.id]-baseTotal;
     const gapPct=gap/baseTotal*100;
     const cls=gapPct<=3?'var(--green)':gapPct<=10?'var(--amber)':'var(--red)';
-    return `<td class="mono" style="text-align:right;color:${cls}">${gap>=0?'+':''}${AC.fmt$(gap)} (${AC.fmt%(gapPct)})</td>`;
+    return `<td class="mono" style="text-align:right;color:${cls}">${gap>=0?'+':''}${AC.fmtDollar(gap)} (${AC.fmtPct(gapPct)})</td>`;
   }).join('')}
   <td colspan="2"></td>
 `;
@@ -233,7 +233,7 @@ negDiv.innerHTML = suppliers.map(s => {
       ${bucketGaps.map((bg,i)=>`
         <div class="neg-item" style="background:${bg.pct>10?'var(--red-dim)':'var(--amber-dim)'}">
           <span style="color:${bg.color}">${i+1}. ${bg.name}</span>
-          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${bg.pct>10?'var(--red)':'var(--amber)'}">+${AC.fmt$(bg.gap)} (+${bg.pct.toFixed(1)}%)</span>
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:${bg.pct>10?'var(--red)':'var(--amber)'}">+${AC.fmtDollar(bg.gap)} (+${bg.pct.toFixed(1)}%)</span>
         </div>
       `).join('')}
     </div>

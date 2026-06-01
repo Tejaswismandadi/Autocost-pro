@@ -88,7 +88,7 @@ const vol = baseline.annualVolume;
 
 // KPIs
 document.getElementById('kpiRow').innerHTML = `
-  <div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">${AC.fmt$(total)}</div><div class="kpi-sub">per unit — frozen baseline</div></div>
+  <div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">${AC.fmtDollar(total)}</div><div class="kpi-sub">per unit — frozen baseline</div></div>
   <div class="kpi blue"><div class="kpi-label">Annual Cost</div><div class="kpi-value blue">${AC.fmtK(total*vol)}</div><div class="kpi-sub">at ${(vol/1000).toFixed(0)}K units/year</div></div>
   <div class="kpi purple"><div class="kpi-label">Program Life Cost</div><div class="kpi-value purple">${AC.fmtK(total*vol*baseline.programLife)}</div><div class="kpi-sub">over ${baseline.programLife} years</div></div>
   <div class="kpi green"><div class="kpi-label">Buckets</div><div class="kpi-value green">10</div><div class="kpi-sub">cost categories</div></div>
@@ -108,7 +108,7 @@ baseline.buckets.forEach((bucket,bi) => {
     <td style="color:var(--text3);font-size:11px">${bucket.items.length} line items</td>
     <td></td>
     <td class="bar-cell"><div class="bar-mini" style="width:${Math.min(pct*2.2,100)}%;background:${bucket.color}"></div></td>
-    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmt$(bucket.cost)}</td>
+    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmtDollar(bucket.cost)}</td>
     <td class="mono" style="text-align:right">${pct}%</td>
     <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
   `;
@@ -126,7 +126,7 @@ baseline.buckets.forEach((bucket,bi) => {
       <td style="color:var(--text3)">${item.basis}</td>
       <td style="color:var(--text3)">${item.source}</td>
       <td></td>
-      <td class="mono" style="text-align:right">${AC.fmt$(item.cost,3)}</td>
+      <td class="mono" style="text-align:right">${AC.fmtDollar(item.cost,3)}</td>
       <td class="mono" style="text-align:right;color:var(--text3)">${(item.cost/total*100).toFixed(2)}%</td>
       <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(item.cost*vol)}</td>
     `;
@@ -143,7 +143,7 @@ baseline.buckets.forEach((bucket,bi) => {
     <td style="padding-left:28px;font-weight:600;color:${bucket.color};font-size:11px">SUBTOTAL — ${bucket.name}</td>
     <td colspan="2"></td>
     <td></td>
-    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmt$(bucket.cost)}</td>
+    <td class="mono bold" style="text-align:right;color:${bucket.color}">${AC.fmtDollar(bucket.cost)}</td>
     <td class="mono bold" style="text-align:right;color:${bucket.color}">${pct}%</td>
     <td class="mono" style="text-align:right;color:var(--text3)">${AC.fmtK(bucket.cost*vol)}</td>
   `;
@@ -158,7 +158,7 @@ gtr.innerHTML = `
   <td style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--accent)">SHOULD COST — GRAND TOTAL</td>
   <td colspan="2" style="color:var(--text3);font-size:11px">Baseline locked Jan 15, 2024</td>
   <td></td>
-  <td class="mono" style="text-align:right;font-size:15px;font-weight:700;color:var(--accent)">${AC.fmt$(total)}</td>
+  <td class="mono" style="text-align:right;font-size:15px;font-weight:700;color:var(--accent)">${AC.fmtDollar(total)}</td>
   <td class="mono" style="text-align:right;color:var(--accent)">100%</td>
   <td class="mono" style="text-align:right;color:var(--accent)">${AC.fmtK(total*vol)}/yr</td>
 `;
@@ -185,7 +185,7 @@ sv.innerHTML = baseline.buckets.map(b=>{
     <div style="margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;margin-bottom:4px">
         <span style="font-size:12px;color:var(--text2)">${b.name}</span>
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${b.color}">${AC.fmt$(b.cost)} · ${pct}%</span>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:${b.color}">${AC.fmtDollar(b.cost)} · ${pct}%</span>
       </div>
       <div class="progress-wrap"><div class="progress-bar" style="width:${pct*2}%;background:${b.color}"></div></div>
     </div>
@@ -200,7 +200,7 @@ document.getElementById('insights').innerHTML = `
   <div style="display:flex;flex-direction:column;gap:10px">
     <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">
       <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">Dominant cost bucket</div>
-      <div style="font-size:12px;color:var(--text2)">${topBucket.name} at ${AC.fmt$(topBucket.cost)} (${(topBucket.cost/total*100).toFixed(1)}%) drives the most value in negotiation.</div>
+      <div style="font-size:12px;color:var(--text2)">${topBucket.name} at ${AC.fmtDollar(topBucket.cost)} (${(topBucket.cost/total*100).toFixed(1)}%) drives the most value in negotiation.</div>
     </div>
     <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent2)">
       <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:4px">Material as % of total</div>
@@ -212,7 +212,7 @@ document.getElementById('insights').innerHTML = `
     </div>
     <div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--purple)">
       <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px">Negotiation target</div>
-      <div style="font-size:12px;color:var(--text2)">Should cost + 3% buffer = <strong style="color:var(--accent)">${AC.fmt$(total*1.03)}</strong> target. Walkaway at ${AC.fmt$(total*1.08)}. Any quote above ${AC.fmt$(total*1.20)} triggers re-source evaluation.</div>
+      <div style="font-size:12px;color:var(--text2)">Should cost + 3% buffer = <strong style="color:var(--accent)">${AC.fmtDollar(total*1.03)}</strong> target. Walkaway at ${AC.fmtDollar(total*1.08)}. Any quote above ${AC.fmtDollar(total*1.20)} triggers re-source evaluation.</div>
     </div>
   </div>
 `;

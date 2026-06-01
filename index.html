@@ -218,22 +218,22 @@ const latestRev = history[history.length-1];
 document.getElementById('statsRow').innerHTML = `
   <div class="stat-mini kpi accent">
     <div class="stat-mini-label">Should Cost Baseline</div>
-    <div class="stat-mini-val accent">${AC.fmt$(baseTotal)}</div>
+    <div class="stat-mini-val accent">${AC.fmtDollar(baseTotal)}</div>
     <div class="kpi-sub">Frozen at program award</div>
   </div>
   <div class="stat-mini kpi blue">
     <div class="stat-mini-label">Awarded Price</div>
-    <div class="stat-mini-val blue">${AC.fmt$(s1Total)}</div>
+    <div class="stat-mini-val blue">${AC.fmtDollar(s1Total)}</div>
     <div class="kpi-sub">Supplier A — DDP Net 60</div>
   </div>
   <div class="stat-mini kpi ${gap>0?'red':'green'}">
     <div class="stat-mini-label">Gap vs Should Cost</div>
-    <div class="stat-mini-val ${gap>0?'red':'green'}">${gap>=0?'+':''}${AC.fmt$(gap)}</div>
-    <div class="kpi-sub">${AC.fmt%((gap/baseTotal)*100)} above baseline</div>
+    <div class="stat-mini-val ${gap>0?'red':'green'}">${gap>=0?'+':''}${AC.fmtDollar(gap)}</div>
+    <div class="kpi-sub">${AC.fmtPct((gap/baseTotal)*100)} above baseline</div>
   </div>
   <div class="stat-mini kpi purple">
     <div class="stat-mini-label">Current Price (Rev ${latestRev.rev})</div>
-    <div class="stat-mini-val purple">${AC.fmt$(latestRev.price)}</div>
+    <div class="stat-mini-val purple">${AC.fmtDollar(latestRev.price)}</div>
     <div class="kpi-sub">${latestRev.label}</div>
   </div>
 `;

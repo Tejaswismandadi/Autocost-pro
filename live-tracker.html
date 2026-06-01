@@ -144,13 +144,13 @@ function render() {
 
   // KPIs
   document.getElementById('kpiRow').innerHTML = `
-    <div class="kpi accent"><div class="kpi-label">Should Cost Baseline</div><div class="kpi-value accent">${AC.fmt$(baseTotal)}</div><div class="kpi-sub">Frozen — never changes</div></div>
-    <div class="kpi ${totalImpact>0?'red':'green'}"><div class="kpi-label">Current Simulated Price</div><div class="kpi-value ${totalImpact>0?'red':'green'}">${AC.fmt$(currentPrice)}</div><div class="kpi-sub">${totalImpact>=0?'+':''}${AC.fmt$(totalImpact)} vs baseline</div></div>
-    <div class="kpi blue"><div class="kpi-label">Awarded Price (Rev 1)</div><div class="kpi-value blue">${AC.fmt$(awardedPrice)}</div><div class="kpi-sub">Supplier A — DDP Net 60</div></div>
+    <div class="kpi accent"><div class="kpi-label">Should Cost Baseline</div><div class="kpi-value accent">${AC.fmtDollar(baseTotal)}</div><div class="kpi-sub">Frozen — never changes</div></div>
+    <div class="kpi ${totalImpact>0?'red':'green'}"><div class="kpi-label">Current Simulated Price</div><div class="kpi-value ${totalImpact>0?'red':'green'}">${AC.fmtDollar(currentPrice)}</div><div class="kpi-sub">${totalImpact>=0?'+':''}${AC.fmtDollar(totalImpact)} vs baseline</div></div>
+    <div class="kpi blue"><div class="kpi-label">Awarded Price (Rev 1)</div><div class="kpi-value blue">${AC.fmtDollar(awardedPrice)}</div><div class="kpi-sub">Supplier A — DDP Net 60</div></div>
     <div class="kpi ${currentPrice>walkaway?'red':currentPrice>targetPrice?'amber':'green'}">
       <div class="kpi-label">vs Target Price</div>
-      <div class="kpi-value ${currentPrice>walkaway?'red':currentPrice>targetPrice?'amber':'green'}">${AC.fmt$(currentPrice-targetPrice)}</div>
-      <div class="kpi-sub">Target: ${AC.fmt$(targetPrice)} | Walkaway: ${AC.fmt$(walkaway)}</div>
+      <div class="kpi-value ${currentPrice>walkaway?'red':currentPrice>targetPrice?'amber':'green'}">${AC.fmtDollar(currentPrice-targetPrice)}</div>
+      <div class="kpi-sub">Target: ${AC.fmtDollar(targetPrice)} | Walkaway: ${AC.fmtDollar(walkaway)}</div>
     </div>
     <div class="kpi purple"><div class="kpi-label">Annual Impact vs Baseline</div><div class="kpi-value purple">${AC.fmtK(Math.abs(totalImpact)*baseline.annualVolume)}</div><div class="kpi-sub">${totalImpact>=0?'cost increase':'cost saving'} at ${(baseline.annualVolume/1000).toFixed(0)}K units</div></div>
   `;
@@ -193,7 +193,7 @@ function renderWaterfall(currentPrice) {
   document.getElementById('waterfallChart').innerHTML = items.map(item => {
     const isTotal = item.type==='base'||item.type==='total';
     const barWidth = isTotal ? (item.value/maxVal*100) : (Math.abs(item.value)/maxVal*100);
-    const displayVal = item.type==='base'||item.type==='total' ? AC.fmt$(item.value) : (item.value>=0?'+':'')+AC.fmt$(item.value);
+    const displayVal = item.type==='base'||item.type==='total' ? AC.fmtDollar(item.value) : (item.value>=0?'+':'')+AC.fmtDollar(item.value);
     return `
       <div style="display:grid;grid-template-columns:200px 1fr 80px;gap:8px;align-items:center;margin-bottom:6px">
         <div style="font-size:11px;color:${isTotal?'var(--text)':'var(--text2)'};text-align:right;padding-right:8px">${item.label}</div>
@@ -222,7 +222,7 @@ function renderIndexCards() {
           <span class="index-change ${changeClass}">${changeSign}${changePct.toFixed(1)}%</span>
         </div>
         <div style="font-family:'DM Mono',monospace;font-size:10px;color:${impact>0?'var(--red)':'var(--green)'}">
-          Price impact: ${impact>=0?'+':''}${AC.fmt$(impact)}/part &nbsp;·&nbsp; ${AC.fmtK(Math.abs(impact)*baseline.annualVolume)}/yr
+          Price impact: ${impact>=0?'+':''}${AC.fmtDollar(impact)}/part &nbsp;·&nbsp; ${AC.fmtK(Math.abs(impact)*baseline.annualVolume)}/yr
         </div>
         <div style="font-size:10px;color:var(--text3);margin-top:4px">${idx.source} · Updated ${AC.fmtDate(idx.lastUpdate)}</div>
       </div>
@@ -254,13 +254,13 @@ function renderGauge(current, target, walkaway, awarded) {
       ].map(m=>`
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:6px">
           <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)">${m.label}</div>
-          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${m.color}">${AC.fmt$(m.val)}</div>
+          <div style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:${m.color}">${AC.fmtDollar(m.val)}</div>
         </div>
       `).join('')}
     </div>
     <div style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:8px;text-align:center">
       <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:4px">CURRENT SIMULATED PRICE</div>
-      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:${current>walkaway?'var(--red)':current>target?'var(--amber)':'var(--green)'}">${AC.fmt$(current)}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:${current>walkaway?'var(--red)':current>target?'var(--amber)':'var(--green)'}">${AC.fmtDollar(current)}</div>
       <div style="margin-top:4px"><span class="badge ${current>walkaway?'badge-bad':current>target?'badge-warn':'badge-good'}">${current>walkaway?'ABOVE WALKAWAY':current>target?'ABOVE TARGET':'WITHIN TARGET'}</span></div>
     </div>
   `;
@@ -282,7 +282,7 @@ function updateTariff() {
   const totalCurrent = calcCurrentPrice();
   document.getElementById('tariffImpact').innerHTML = rate===0 ? 'No tariff — USMCA compliant' : `
     <div style="color:var(--amber)">Tariff rate: ${(rate*100).toFixed(1)}% on ${(pct*100).toFixed(0)}% of piece price</div>
-    <div style="margin-top:6px;color:var(--red)">Impact: +${AC.fmt$(tariffImpact)}/part &nbsp;·&nbsp; +${AC.fmtK(tariffImpact*baseline.annualVolume)}/yr</div>
+    <div style="margin-top:6px;color:var(--red)">Impact: +${AC.fmtDollar(tariffImpact)}/part &nbsp;·&nbsp; +${AC.fmtK(tariffImpact*baseline.annualVolume)}/yr</div>
     <div style="margin-top:6px;color:var(--text3)">Supplier could claim passthrough under LTA tariff clause</div>
   `;
   render();
