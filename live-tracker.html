@@ -113,15 +113,15 @@
 
 <script src="data.js"></script>
 <script>
-const baseline = AC.getBaseline();
-const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
-let indices = AC.getIndices();
-let ecns = AC.load('ecns', [
+var baseline = AC.getBaseline();
+var baseTotal = baseline.buckets.reduce(function(s,b){return s+b.cost;},0);
+var indices = AC.getIndices();
+var ecns = AC.load('ecns', [
   {id:'e1', desc:'ECN-001 Gate redesign — slider eliminated', type:'DFM',    impact:-1.20, status:'Approved'},
   {id:'e2', desc:'ECN-004 USB module upgrade per CR-2024-44', type:'Spec',   impact:+2.80, status:'Approved'},
   {id:'e3', desc:'ECN-007 Armrest foam density change',       type:'Material',impact:+0.45, status:'Pending'},
 ]);
-let tariffImpact = 0;
+var tariffImpact = 0;
 
 function calcCurrentPrice() {
   // Index impacts

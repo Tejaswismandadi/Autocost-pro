@@ -198,7 +198,7 @@ window.onload = function() {
   }
 };
 
-function toggleBucket(bi) {
+window.toggleBucket = function(bi) {
   var items = document.getElementById('bi-' + bi);
   if(!items) return;
   var isOpen = items.classList.contains('open');

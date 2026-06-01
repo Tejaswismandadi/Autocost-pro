@@ -206,14 +206,14 @@
 
 <script src="data.js"></script>
 <script>
-const baseline = AC.getBaseline();
-const quotes = AC.getQuotes();
-const history = AC.getHistory();
+var baseline = AC.getBaseline();
+var quotes = AC.getQuotes();
+var history = AC.getHistory();
 
-const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
-const s1Total = quotes.S1?.totalPiecePrice || 0;
-const gap = s1Total - baseTotal;
-const latestRev = history[history.length-1];
+var baseTotal = baseline.buckets.reduce(function(s,b){return s+b.cost;},0);
+var s1Total = (quotes.S1 && quotes.S1.totalPiecePrice) || 0;
+var gap = s1Total - baseTotal;
+var latestRev = history[history.length-1];
 
 document.getElementById('statsRow').innerHTML = `
   <div class="stat-mini kpi accent">

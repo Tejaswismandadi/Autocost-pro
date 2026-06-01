@@ -78,10 +78,10 @@ th.s-col{min-width:100px;text-align:right;}
 
 <script src="data.js"></script>
 <script>
-const baseline = AC.getBaseline();
-const quotes = AC.getQuotes();
-const suppliers = AC.getSuppliers();
-const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+var baseline = AC.getBaseline();
+var quotes = AC.getQuotes();
+var suppliers = AC.getSuppliers();
+var baseTotal = baseline.buckets.reduce(function(s,b){return s+b.cost;},0);
 
 // Normalize quotes
 function normalizedTotal(sid) {
@@ -96,7 +96,7 @@ function normalizedTotal(sid) {
   return t;
 }
 
-const normTotals = {};
+var normTotals = {};
 suppliers.forEach(s => { normTotals[s.id] = normalizedTotal(s.id); });
 
 // Summary KPIs

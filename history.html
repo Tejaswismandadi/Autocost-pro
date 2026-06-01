@@ -117,9 +117,9 @@
 
 <script src="data.js"></script>
 <script>
-let history = AC.getHistory();
-const baseline = AC.getBaseline();
-const baseTotal = baseline.buckets.reduce((s,b)=>s+b.cost,0);
+var history = AC.getHistory();
+var baseline = AC.getBaseline();
+var baseTotal = baseline.buckets.reduce(function(s,b){return s+b.cost;},0);
 
 const typeColors = {
   baseline:'var(--accent)', award:'var(--accent2)', ecn:'var(--amber)',
