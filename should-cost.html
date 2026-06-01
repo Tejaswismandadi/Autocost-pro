@@ -3,17 +3,90 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Should Cost Baseline — AutoCost Pro</title>
+<title>Should Cost Builder — AutoCost Pro</title>
 <link rel="stylesheet" href="main.css">
 <style>
-.bucket-header{cursor:pointer;user-select:none;background:var(--bg4);padding:10px 16px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:28px 1fr 80px 100px 80px 80px;gap:8px;align-items:center;transition:background .15s;}
-.bucket-header:hover{background:var(--bg5);}
-.bucket-items{display:none;}
-.bucket-items.open{display:block;}
-.item-row{display:grid;grid-template-columns:28px 1fr 160px 140px 80px 80px 80px;gap:8px;align-items:center;padding:7px 16px;border-bottom:1px solid var(--border);font-size:11px;}
-.item-row:last-child{border-bottom:none;}
-.lock-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;background:var(--amber-dim);color:var(--amber);font-family:'DM Mono',monospace;font-size:10px;border:1px solid rgba(245,158,11,.2);}
-.bar{height:4px;border-radius:2px;display:inline-block;}
+/* ── LAYOUT ── */
+.builder-grid{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start;}
+.input-panel{display:flex;flex-direction:column;gap:12px;position:sticky;top:72px;}
+.results-panel{display:flex;flex-direction:column;gap:12px;}
+
+/* ── SECTION TABS ── */
+.section-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:12px;}
+.stab{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;}
+.stab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.stab:hover:not(.active){background:var(--bg4);color:var(--text2);}
+
+/* ── INPUT SECTIONS ── */
+.inp-section{display:none;}
+.inp-section.active{display:block;}
+
+/* ── FORM ROWS ── */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.frow-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.frow-full{margin-bottom:8px;}
+.flabel{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:4px;}
+.finput{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:7px 10px;outline:none;transition:border-color .15s;}
+.finput:focus{border-color:var(--accent);}
+.finput.calc{background:var(--bg4);color:var(--accent);cursor:default;}
+select.finput option{background:var(--bg3);}
+.fhint{font-size:10px;color:var(--text3);margin-top:2px;font-style:italic;}
+
+/* ── BOM TABLE ── */
+.bom-table{width:100%;border-collapse:collapse;font-size:11px;}
+.bom-table th{background:var(--bg4);padding:6px 8px;text-align:left;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--border2);}
+.bom-table td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.bom-table tr:hover td{background:var(--bg4);}
+.bom-input{background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:2px 4px;width:100%;outline:none;}
+.bom-input:focus{border-bottom-color:var(--accent);}
+.bom-calc{color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;text-align:right;}
+.del-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;}
+.del-btn:hover{background:var(--red-dim);color:var(--red);}
+.add-row-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg3);border:1px dashed var(--border2);border-radius:6px;color:var(--text3);font-size:12px;cursor:pointer;width:100%;margin-top:6px;transition:all .15s;}
+.add-row-btn:hover{background:var(--bg4);color:var(--accent);border-color:var(--accent);}
+
+/* ── RESULTS ── */
+.bucket-result{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.bucket-result-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.bucket-result-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;}
+.bucket-result-cost{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;}
+.bucket-result-body{padding:10px 14px;}
+.result-line{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.result-line:last-child{border-bottom:none;}
+.result-line-label{color:var(--text2);}
+.result-line-val{font-family:'DM Mono',monospace;color:var(--text);}
+
+/* ── GRAND TOTAL ── */
+.grand-total{background:var(--bg4);border:1px solid var(--border2);border-radius:12px;padding:16px 20px;}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.total-row:last-child{border-bottom:none;}
+.total-label{font-size:12px;color:var(--text2);}
+.total-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;}
+
+/* ── INDEX PRICES ── */
+.index-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.index-chip{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;}
+.index-chip-name{font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:2px;}
+.index-chip-val{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;}
+
+/* ── STATUS BAR ── */
+.calc-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);display:flex;align-items:center;gap:6px;}
+
+/* ── PROCESS TABLE ── */
+.proc-table{width:100%;border-collapse:collapse;font-size:11px;}
+.proc-table th{background:var(--bg4);padding:6px 8px;text-align:left;font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);border-bottom:1px solid var(--border2);}
+.proc-table td{padding:5px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.proc-table tr:hover td{background:var(--bg4);}
+
+/* ── WATERFALL ── */
+.waterfall-item{display:grid;grid-template-columns:180px 1fr 70px;gap:8px;align-items:center;margin-bottom:6px;}
+.wf-label{font-size:11px;color:var(--text2);text-align:right;}
+.wf-bar-wrap{height:20px;border-radius:3px;overflow:hidden;background:var(--bg3);}
+.wf-bar{height:100%;border-radius:3px;transition:width .4s;}
+.wf-val{font-family:'DM Mono',monospace;font-size:11px;text-align:right;}
+
+/* ── SAVE/LOAD ── */
+.action-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -27,183 +100,1065 @@
     <a href="live-tracker.html" class="nav-link"><span class="nav-num">04</span>Live Tracker</a>
     <a href="history.html" class="nav-link"><span class="nav-num">05</span>Price History</a>
   </div>
-  <div class="nav-badge"><div class="pulse"></div>BASELINE LOCKED</div>
+  <div class="nav-badge"><div class="pulse"></div><span id="calcStatus">CALCULATING</span></div>
 </nav>
 
 <div class="page">
-  <div class="flex-between mb-16">
+
+  <!-- TOP BAR -->
+  <div class="flex-between mb-12">
     <div>
-      <div class="page-title">Should Cost <span class="accent">Baseline</span></div>
-      <div class="page-subtitle">Built at program award — frozen as permanent reference. Never changes.</div>
+      <div class="page-title">Should Cost <span class="accent">Builder</span></div>
+      <div class="page-subtitle">Enter your part data below. Every cost calculates automatically.</div>
     </div>
-    <div class="lock-badge">FROZEN — Program Award Date: Jan 15, 2024</div>
+    <div class="action-bar">
+      <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑 Clear All</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadDemo()">📋 Load Demo</button>
+      <button class="btn btn-primary btn-sm" onclick="saveModel()">💾 Save Model</button>
+    </div>
   </div>
 
-  <div class="kpi-grid" id="kpiRow">
-    <div class="kpi accent"><div class="kpi-label">Loading...</div><div class="kpi-value accent">—</div></div>
+  <!-- LIVE INDEX PRICES -->
+  <div class="index-strip" id="indexStrip"></div>
+
+  <!-- PROGRAM HEADER -->
+  <div class="card mb-12">
+    <div class="card-header"><div class="card-title">📁 Program Information</div></div>
+    <div class="card-body">
+      <div class="frow-3">
+        <div><label class="flabel">Program / Vehicle</label><input class="finput" id="prog_name" placeholder="e.g. Model Y Console" oninput="recalc()"></div>
+        <div><label class="flabel">Part Number</label><input class="finput" id="prog_pn" placeholder="e.g. AC-CONSOLE-001" oninput="recalc()"></div>
+        <div><label class="flabel">Part Description</label><input class="finput" id="prog_desc" placeholder="e.g. Center Console Assembly" oninput="recalc()"></div>
+      </div>
+      <div class="frow-3">
+        <div>
+          <label class="flabel">Manufacturing Region</label>
+          <select class="finput" id="prog_region" onchange="recalc()">
+            <option value="mx">Mexico</option>
+            <option value="us">US Midwest</option>
+            <option value="cn">China</option>
+          </select>
+        </div>
+        <div><label class="flabel">Annual Volume (units)</label><input class="finput" type="number" id="prog_vol" value="100000" oninput="recalc()"></div>
+        <div><label class="flabel">Program Life (years)</label><input class="finput" type="number" id="prog_life" value="5" oninput="recalc()"></div>
+      </div>
+      <div class="frow">
+        <div><label class="flabel">Supplier Quote ($/unit) — for gap analysis</label><input class="finput" type="number" id="prog_quote" placeholder="Enter supplier quote" oninput="recalc()"></div>
+        <div><label class="flabel">Tooling Amortization Volume (lifetime units)</label><input class="finput" type="number" id="prog_amort" value="500000" oninput="recalc()"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="card mt-16">
-    <div class="card-header">
-      <div class="card-title">Cost Breakdown — All 10 Buckets</div>
-      <div style="font-size:11px;color:var(--text3)">Click any bucket row to expand line items</div>
-    </div>
-    <div id="bucketsContainer"></div>
-  </div>
+  <!-- MAIN BUILDER -->
+  <div class="builder-grid">
 
-  <div class="grid-2 mt-16">
-    <div class="card">
-      <div class="card-header"><div class="card-title">Cost Structure</div></div>
-      <div class="card-body" id="structViz"></div>
-    </div>
-    <div class="card">
-      <div class="card-header"><div class="card-title">Key Insights</div></div>
-      <div class="card-body" id="insightsBox"></div>
-    </div>
-  </div>
-</div>
+    <!-- LEFT: INPUT SECTIONS -->
+    <div class="input-panel">
+
+      <!-- Section tabs -->
+      <div class="section-tabs">
+        <div class="stab active" onclick="showSection('mat')">01 Material</div>
+        <div class="stab" onclick="showSection('proc')">02 Process</div>
+        <div class="stab" onclick="showSection('labor')">03 Labor</div>
+        <div class="stab" onclick="showSection('ovhd')">04 Overhead</div>
+        <div class="stab" onclick="showSection('sga')">05 SG&A</div>
+        <div class="stab" onclick="showSection('logi')">06 Logistics</div>
+        <div class="stab" onclick="showSection('tool')">07 Tooling</div>
+        <div class="stab" onclick="showSection('test')">08 Testing</div>
+        <div class="stab" onclick="showSection('hidn')">09 Hidden</div>
+        <div class="stab" onclick="showSection('mrgn')">10 Margin</div>
+      </div>
+
+      <!-- ── SECTION 01: MATERIAL ── -->
+      <div class="inp-section active card" id="sec-mat">
+        <div class="card-header"><div class="card-title" style="color:var(--accent)">01 — Direct Material (BOM)</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Add each BOM line item. Select material type and the current index price loads automatically.</div>
+          <table class="bom-table" id="matTable">
+            <thead>
+              <tr>
+                <th>Part / Description</th>
+                <th>Material</th>
+                <th>Wt/Qty</th>
+                <th>Unit</th>
+                <th>Util%</th>
+                <th>$/part</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="matBody"></tbody>
+          </table>
+          <button class="add-row-btn" onclick="addMatRow()">+ Add BOM Line Item</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 02: PROCESS ── -->
+      <div class="inp-section card" id="sec-proc">
+        <div class="card-header"><div class="card-title" style="color:var(--accent2)">02 — Process Cost (Operations)</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Add each manufacturing operation. Select machine type → rate loads. Enter cycle time → cost calculates.</div>
+          <table class="proc-table" id="procTable">
+            <thead>
+              <tr>
+                <th>Operation</th>
+                <th>Machine</th>
+                <th>Rate $/hr</th>
+                <th>Cycle (s)</th>
+                <th>OEE%</th>
+                <th>$/part</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="procBody"></tbody>
+          </table>
+          <button class="add-row-btn" onclick="addProcRow()">+ Add Operation</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 03: LABOR ── -->
+      <div class="inp-section card" id="sec-labor">
+        <div class="card-header"><div class="card-title" style="color:#a855f7">03 — Direct Labor</div></div>
+        <div class="card-body">
+          <div class="frow">
+            <div>
+              <label class="flabel">Base Wage ($/hr)</label>
+              <input class="finput calc" id="lb_base" readonly>
+              <div class="fhint">Auto-loaded from region selection</div>
+            </div>
+            <div>
+              <label class="flabel">Statutory Burden %</label>
+              <input class="finput calc" id="lb_burden" readonly>
+              <div class="fhint">IMSS/FICA/benefits by region</div>
+            </div>
+          </div>
+          <div class="frow">
+            <div>
+              <label class="flabel">Loaded Labor Rate ($/hr)</label>
+              <input class="finput calc" id="lb_loaded" readonly style="color:var(--accent)">
+            </div>
+            <div>
+              <label class="flabel">Override Loaded Rate ($/hr)</label>
+              <input class="finput" type="number" id="lb_override" placeholder="Leave blank to use auto" oninput="recalc()">
+              <div class="fhint">Enter actual supplier rate if known</div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Labor stations — enter headcount and cycle time per station</div>
+            <table class="bom-table" id="laborTable">
+              <thead><tr><th>Station / Operation</th><th>Operators</th><th>Cycle (s)</th><th>$/part</th><th></th></tr></thead>
+              <tbody id="laborBody"></tbody>
+            </table>
+            <button class="add-row-btn" onclick="addLaborRow()">+ Add Labor Station</button>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:10px">
+            <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Indirect labor</div>
+            <div class="frow">
+              <div><label class="flabel">Indirect Headcount</label><input class="finput" type="number" id="lb_indirect" value="4" oninput="recalc()"></div>
+              <div><label class="flabel">Parts per Shift</label><input class="finput" type="number" id="lb_pps" value="400" oninput="recalc()"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 04: OVERHEAD ── -->
+      <div class="inp-section card" id="sec-ovhd">
+        <div class="card-header"><div class="card-title" style="color:#f59e0b">04 — Manufacturing Overhead</div></div>
+        <div class="card-body">
+          <div class="frow">
+            <div>
+              <label class="flabel">Burden Rate Method</label>
+              <select class="finput" id="ovhd_method" onchange="recalc()">
+                <option value="pct">% of Direct Labor (burden rate)</option>
+                <option value="manual">Manual entry per component</option>
+              </select>
+            </div>
+            <div>
+              <label class="flabel">Burden Rate %</label>
+              <input class="finput" type="number" id="ovhd_burden" value="200" oninput="recalc()">
+              <div class="fhint">Typical: 150–250% for mixed mfg</div>
+            </div>
+          </div>
+          <div id="ovhd_manual_section" style="display:none">
+            <div class="frow">
+              <div><label class="flabel">Equipment Depreciation ($/yr)</label><input class="finput" type="number" id="ovhd_depr" placeholder="0" oninput="recalc()"></div>
+              <div><label class="flabel">Facility Cost ($/yr)</label><input class="finput" type="number" id="ovhd_fac" placeholder="0" oninput="recalc()"></div>
+            </div>
+            <div class="frow">
+              <div><label class="flabel">Energy Cost ($/yr)</label><input class="finput" type="number" id="ovhd_energy" placeholder="0" oninput="recalc()"></div>
+              <div><label class="flabel">Maintenance ($/yr)</label><input class="finput" type="number" id="ovhd_maint" placeholder="0" oninput="recalc()"></div>
+            </div>
+            <div class="frow">
+              <div><label class="flabel">Quality Systems ($/yr)</label><input class="finput" type="number" id="ovhd_qual" placeholder="0" oninput="recalc()"></div>
+              <div><label class="flabel">Support Staff ($/yr)</label><input class="finput" type="number" id="ovhd_staff" placeholder="0" oninput="recalc()"></div>
+            </div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">PPAP/APQP Launch Cost ($)</label><input class="finput" type="number" id="ovhd_ppap" value="45000" oninput="recalc()"></div>
+            <div><label class="flabel">Scrap/Rework Provision %</label><input class="finput" type="number" id="ovhd_scrap" value="2.5" oninput="recalc()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 05: SG&A ── -->
+      <div class="inp-section card" id="sec-sga">
+        <div class="card-header"><div class="card-title" style="color:#ef4444">05 — SG&A</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Applied as % of manufacturing cost (material + process + labor + overhead). IBISWorld Tier 1 benchmark: 7–10%.</div>
+          <div class="frow">
+            <div><label class="flabel">Sales & Commercial %</label><input class="finput" type="number" id="sga_sales" value="2.0" step="0.1" oninput="recalc()"></div>
+            <div><label class="flabel">Finance / HR / Legal / IT %</label><input class="finput" type="number" id="sga_admin" value="2.5" step="0.1" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Engineering Support %</label><input class="finput" type="number" id="sga_eng" value="2.0" step="0.1" oninput="recalc()"></div>
+            <div><label class="flabel">R&D %</label><input class="finput" type="number" id="sga_rd" value="0.8" step="0.1" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Executive Overhead %</label><input class="finput" type="number" id="sga_exec" value="1.0" step="0.1" oninput="recalc()"></div>
+            <div><label class="flabel" style="color:var(--accent)">Total SG&A %</label><input class="finput calc" id="sga_total" readonly></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 06: LOGISTICS ── -->
+      <div class="inp-section card" id="sec-logi">
+        <div class="card-header"><div class="card-title" style="color:#06b6d4">06 — Logistics & Packaging</div></div>
+        <div class="card-body">
+          <div class="frow">
+            <div>
+              <label class="flabel">Incoterms</label>
+              <select class="finput" id="logi_inco" onchange="recalc()">
+                <option value="ddp">DDP — Supplier pays all freight</option>
+                <option value="fob">FOB — Tesla pays from port</option>
+                <option value="exw">EXW — Tesla pays all freight</option>
+              </select>
+            </div>
+            <div><label class="flabel">Outbound Freight ($/unit)</label><input class="finput calc" id="logi_freight" readonly></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Packaging Cost ($/unit)</label><input class="finput" type="number" id="logi_pkg" value="1.40" step="0.10" oninput="recalc()"></div>
+            <div><label class="flabel">Returnable Dunnage ($/unit)</label><input class="finput" type="number" id="logi_dunnage" value="0.16" step="0.01" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Import Duty % (if applicable)</label><input class="finput" type="number" id="logi_duty" value="0" step="0.1" oninput="recalc()"></div>
+            <div><label class="flabel">Inbound Raw Material ($/unit)</label><input class="finput" type="number" id="logi_inbound" value="0.85" step="0.05" oninput="recalc()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 07: TOOLING ── -->
+      <div class="inp-section card" id="sec-tool">
+        <div class="card-header"><div class="card-title" style="color:#84cc16">07 — Tooling Amortization</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Enter each tool cost. Amortization = tool cost ÷ lifetime volume (set in Program Info above).</div>
+          <table class="bom-table" id="toolTable">
+            <thead><tr><th>Tool Description</th><th>Complexity</th><th>Tool Cost ($)</th><th>$/part</th><th></th></tr></thead>
+            <tbody id="toolBody"></tbody>
+          </table>
+          <button class="add-row-btn" onclick="addToolRow()">+ Add Tool</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 08: TESTING ── -->
+      <div class="inp-section card" id="sec-test">
+        <div class="card-header"><div class="card-title" style="color:#f97316">08 — Testing & Compliance</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">One-time costs amortized over annual volume. Add each required test.</div>
+          <table class="bom-table" id="testTable">
+            <thead><tr><th>Test / Requirement</th><th>Standard</th><th>Total Cost ($)</th><th>Submissions</th><th>$/part</th><th></th></tr></thead>
+            <tbody id="testBody"></tbody>
+          </table>
+          <button class="add-row-btn" onclick="addTestRow()">+ Add Test</button>
+        </div>
+      </div>
+
+      <!-- ── SECTION 09: HIDDEN COSTS ── -->
+      <div class="inp-section card" id="sec-hidn">
+        <div class="card-header"><div class="card-title" style="color:#ec4899">09 — Hidden Costs</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Costs suppliers never volunteer. Applied as % of piece price or fixed $/unit.</div>
+          <div class="frow">
+            <div><label class="flabel">Payment Terms (days Net)</label><input class="finput" type="number" id="hidn_terms" value="60" oninput="recalc()"></div>
+            <div><label class="flabel">Supplier Cost of Capital %</label><input class="finput" type="number" id="hidn_coc" value="10" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">FX Hedge Premium % (0 if USD)</label><input class="finput" type="number" id="hidn_fx" value="1.5" step="0.1" oninput="recalc()"></div>
+            <div><label class="flabel">Expedite Buffer ($/unit)</label><input class="finput" type="number" id="hidn_exp" value="0.65" step="0.05" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Capacity Reservation ($/unit)</label><input class="finput" type="number" id="hidn_cap" value="0.70" step="0.05" oninput="recalc()"></div>
+            <div><label class="flabel">Warranty Reserve % of price</label><input class="finput" type="number" id="hidn_warr" value="0.5" step="0.1" oninput="recalc()"></div>
+          </div>
+          <div class="frow">
+            <div><label class="flabel">Program Mgmt Overhead ($/unit)</label><input class="finput" type="number" id="hidn_pm" value="0.80" step="0.05" oninput="recalc()"></div>
+            <div><label class="flabel">Inflation Buffer % of price</label><input class="finput" type="number" id="hidn_infl" value="1.0" step="0.1" oninput="recalc()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 10: MARGIN ── -->
+      <div class="inp-section card" id="sec-mrgn">
+        <div class="card-header"><div class="card-title" style="color:#6366f1">10 — Supplier Margin</div></div>
+        <div class="card-body">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Tier 1 automotive interior trim benchmark: 4–7% gross margin. Source: Adient/Lear 10-K filings.</div>
+          <div class="frow">
+            <div><label class="flabel">Gross Margin % on cost</label><input class="finput" type="number" id="mrgn_pct" value="5.0" step="0.5" oninput="recalc()"></div>
+            <div><label class="flabel">Calculated Margin ($/unit)</label><input class="finput calc" id="mrgn_calc" readonly></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end input-panel -->
+
+    <!-- RIGHT: RESULTS -->
+    <div class="results-panel">
+
+      <!-- Grand Total -->
+      <div class="grand-total">
+        <div style="font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">Should Cost Summary</div>
+        <div id="grandTotalRows"></div>
+      </div>
+
+      <!-- Waterfall Chart -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">Cost Waterfall — Bucket Breakdown</div></div>
+        <div class="card-body" id="waterfallDiv"></div>
+      </div>
+
+      <!-- Bucket Details -->
+      <div id="bucketDetails"></div>
+
+      <!-- Gap Analysis -->
+      <div class="card" id="gapCard" style="display:none">
+        <div class="card-header"><div class="card-title" style="color:var(--red)">Gap Analysis vs Supplier Quote</div></div>
+        <div class="card-body" id="gapBody"></div>
+      </div>
+
+    </div><!-- end results-panel -->
+
+  </div><!-- end builder-grid -->
+
+</div><!-- end page -->
 
 <script src="data.js"></script>
 <script>
-window.onload = function() {
-  try {
-    var baseline = AC.getBaseline();
-    var buckets = baseline.buckets;
-    var vol = baseline.annualVolume;
-    var programLife = baseline.programLife;
-    
-    // Calculate total
-    var total = 0;
-    for(var i=0; i<buckets.length; i++) {
-      total += buckets[i].cost;
-    }
-    total = parseFloat(total.toFixed(2));
 
-    // KPIs
-    var kpiDiv = document.getElementById('kpiRow');
-    kpiDiv.innerHTML = 
-      '<div class="kpi accent"><div class="kpi-label">Should Cost Total</div><div class="kpi-value accent">$' + total.toFixed(2) + '</div><div class="kpi-sub">per unit — frozen baseline</div></div>' +
-      '<div class="kpi blue"><div class="kpi-label">Annual Cost</div><div class="kpi-value blue">$' + Math.round(total*vol/1000) + 'K</div><div class="kpi-sub">at ' + Math.round(vol/1000) + 'K units/year</div></div>' +
-      '<div class="kpi purple"><div class="kpi-label">Program Life Cost</div><div class="kpi-value purple">$' + Math.round(total*vol*programLife/1000000) + 'M</div><div class="kpi-sub">over ' + programLife + ' years</div></div>' +
-      '<div class="kpi green"><div class="kpi-label">Buckets</div><div class="kpi-value green">10</div><div class="kpi-sub">cost categories</div></div>' +
-      '<div class="kpi amber"><div class="kpi-label">Line Items</div><div class="kpi-value amber">60+</div><div class="kpi-sub">individual cost lines</div></div>';
+// ── REFERENCE DATA ────────────────────────────────────────────────────────
 
-    // Buckets
-    var container = document.getElementById('bucketsContainer');
-    var html = '';
-    
-    for(var bi=0; bi<buckets.length; bi++) {
-      var bucket = buckets[bi];
-      var pct = (bucket.cost/total*100).toFixed(1);
-      var barW = Math.min(parseFloat(pct)*2.5, 100);
-      
-      html += '<div>';
-      html += '<div class="bucket-header" onclick="toggleBucket(' + bi + ')" id="bh-' + bi + '">';
-      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + bucket.color + '">' + (bi<9?'0':'') + (bi+1) + '</span>';
-      html += '<span style="font-family:Syne,sans-serif;font-weight:600;color:' + bucket.color + '">' + bucket.name + '</span>';
-      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text3)">' + bucket.items.length + ' items</span>';
-      html += '<div><div class="bar" style="width:' + barW + 'px;background:' + bucket.color + ';height:4px"></div></div>';
-      html += '<span style="font-family:DM Mono,monospace;font-size:13px;font-weight:500;color:' + bucket.color + ';text-align:right">$' + bucket.cost.toFixed(2) + '</span>';
-      html += '<span style="font-family:DM Mono,monospace;font-size:11px;color:var(--text3);text-align:right">' + pct + '%</span>';
-      html += '</div>';
-      
-      html += '<div class="bucket-items" id="bi-' + bi + '">';
-      // Column header
-      html += '<div class="item-row" style="background:var(--bg4);font-family:DM Mono,monospace;font-size:10px;color:var(--text3)">';
-      html += '<span></span><span>ITEM</span><span>BASIS</span><span>SOURCE</span><span style="text-align:right">$/PART</span><span style="text-align:right">% TOTAL</span><span style="text-align:right">$/YEAR</span></div>';
-      
-      for(var ii=0; ii<bucket.items.length; ii++) {
-        var item = bucket.items[ii];
-        var itemPct = (item.cost/total*100).toFixed(2);
-        var itemYear = Math.round(item.cost*vol/1000);
-        html += '<div class="item-row">';
-        html += '<span></span>';
-        html += '<span style="color:var(--text2)">' + item.name + '</span>';
-        html += '<span style="color:var(--text3)">' + item.basis + '</span>';
-        html += '<span style="color:var(--text3)">' + item.source + '</span>';
-        html += '<span style="font-family:DM Mono,monospace;text-align:right">$' + item.cost.toFixed(3) + '</span>';
-        html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">' + itemPct + '%</span>';
-        html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">$' + itemYear + 'K</span>';
-        html += '</div>';
-      }
-      
-      // Subtotal
-      html += '<div class="item-row" style="border-top:1px solid var(--border2);background:var(--bg3)">';
-      html += '<span></span>';
-      html += '<span style="font-weight:600;color:' + bucket.color + '">SUBTOTAL — ' + bucket.name + '</span>';
-      html += '<span></span><span></span>';
-      html += '<span style="font-family:DM Mono,monospace;text-align:right;font-weight:600;color:' + bucket.color + '">$' + bucket.cost.toFixed(2) + '</span>';
-      html += '<span style="font-family:DM Mono,monospace;text-align:right;color:' + bucket.color + '">' + pct + '%</span>';
-      html += '<span style="font-family:DM Mono,monospace;text-align:right;color:var(--text3)">$' + Math.round(bucket.cost*vol/1000) + 'K</span>';
-      html += '</div>';
-      
-      html += '</div></div>'; // close bucket-items and bucket div
-    }
-    
-    // Grand total
-    html += '<div style="background:var(--bg4);border-top:2px solid var(--border2);padding:12px 16px;display:grid;grid-template-columns:28px 1fr 80px 100px 80px 80px;gap:8px;align-items:center">';
-    html += '<span></span>';
-    html += '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:14px;color:var(--accent)">SHOULD COST — GRAND TOTAL</span>';
-    html += '<span></span><span></span>';
-    html += '<span style="font-family:DM Mono,monospace;font-size:16px;font-weight:700;color:var(--accent);text-align:right">$' + total.toFixed(2) + '</span>';
-    html += '<span style="font-family:DM Mono,monospace;color:var(--accent);text-align:right">100%</span>';
-    html += '</div>';
-    
-    container.innerHTML = html;
-
-    // Cost structure viz
-    var sv = document.getElementById('structViz');
-    var svHtml = '';
-    for(var si=0; si<buckets.length; si++) {
-      var sb = buckets[si];
-      var sp = (sb.cost/total*100).toFixed(1);
-      svHtml += '<div style="margin-bottom:10px">';
-      svHtml += '<div style="display:flex;justify-content:space-between;margin-bottom:4px">';
-      svHtml += '<span style="font-size:12px;color:var(--text2)">' + sb.name + '</span>';
-      svHtml += '<span style="font-family:DM Mono,monospace;font-size:11px;color:' + sb.color + '">$' + sb.cost.toFixed(2) + ' - ' + sp + '%</span>';
-      svHtml += '</div>';
-      svHtml += '<div class="progress-wrap"><div class="progress-bar" style="width:' + Math.min(parseFloat(sp)*2.5,100) + '%;background:' + sb.color + '"></div></div>';
-      svHtml += '</div>';
-    }
-    sv.innerHTML = svHtml;
-
-    // Insights
-    var target = (total * 1.03).toFixed(2);
-    var walkaway = (total * 1.08).toFixed(2);
-    var matBucket = null;
-    var laborBucket = null;
-    for(var ki=0; ki<buckets.length; ki++) {
-      if(buckets[ki].id === 'mat') matBucket = buckets[ki];
-      if(buckets[ki].id === 'labor') laborBucket = buckets[ki];
-    }
-    
-    document.getElementById('insightsBox').innerHTML = 
-      '<div style="display:flex;flex-direction:column;gap:10px">' +
-      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--accent)">' +
-      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px">Material dominates at ' + (matBucket ? (matBucket.cost/total*100).toFixed(1) : '?') + '%</div>' +
-      '<div style="font-size:12px;color:var(--text2)">Monitor ICIS polymer indices monthly. PP and foam are the top two material cost drivers.</div>' +
-      '</div>' +
-      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--amber)">' +
-      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--amber);margin-bottom:4px">Mexico labor at ' + (laborBucket ? (laborBucket.cost/total*100).toFixed(1) : '?') + '%</div>' +
-      '<div style="font-size:12px;color:var(--text2)">$4.32/hr loaded vs $27/hr US. CONASAMI increases 10%+ annually. Factor into LTA structure.</div>' +
-      '</div>' +
-      '<div style="background:var(--bg3);border-radius:8px;padding:12px;border-left:3px solid var(--green)">' +
-      '<div style="font-family:Syne,sans-serif;font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px">Negotiation targets</div>' +
-      '<div style="font-size:12px;color:var(--text2)">Target: <strong style="color:var(--accent)">$' + target + '</strong> (should cost +3%). Walkaway: $' + walkaway + ' (+8%). Any quote above $' + (total*1.20).toFixed(2) + ' triggers re-source evaluation.</div>' +
-      '</div>' +
-      '</div>';
-
-  } catch(e) {
-    document.getElementById('kpiRow').innerHTML = '<div style="color:red;padding:20px">JavaScript Error: ' + e.message + '<br>' + e.stack + '</div>';
-  }
+var REGIONS = {
+  mx: { label:'Mexico',     baseWage:3.50,  burden:0.35, freight:2.20, fxRisk:true  },
+  us: { label:'US Midwest', baseWage:19.00, burden:0.37, freight:1.10, fxRisk:false },
+  cn: { label:'China',      baseWage:4.50,  burden:0.35, freight:3.80, fxRisk:true  }
 };
 
-window.toggleBucket = function(bi) {
-  var items = document.getElementById('bi-' + bi);
-  if(!items) return;
-  var isOpen = items.classList.contains('open');
-  items.classList.toggle('open', !isOpen);
+var MATERIALS = {
+  'PP+GF30':      { price:1.90,  unit:'kg',  source:'ICIS PP+GF30',       color:'#00d4aa' },
+  'PP unfilled':  { price:1.30,  unit:'kg',  source:'ICIS PP',            color:'#00d4aa' },
+  'ABS':          { price:1.70,  unit:'kg',  source:'ICIS ABS',           color:'#0099ff' },
+  'PC/ABS':       { price:2.10,  unit:'kg',  source:'ICIS PC/ABS',        color:'#0099ff' },
+  'TPO skin':     { price:7.20,  unit:'m²',  source:'3-quote benchmark',  color:'#a855f7' },
+  'PU foam':      { price:2.80,  unit:'kg',  source:'ICIS MDI/TDI',       color:'#f59e0b' },
+  'PVC skin':     { price:6.50,  unit:'m²',  source:'3-quote benchmark',  color:'#a855f7' },
+  'HRC Steel':    { price:0.85,  unit:'kg',  source:'Fastmarkets HRC',    color:'#6366f1' },
+  'HSLA Steel':   { price:0.95,  unit:'kg',  source:'Fastmarkets HSLA',   color:'#6366f1' },
+  'Aluminium':    { price:2.65,  unit:'kg',  source:'LME Aluminium',      color:'#84cc16' },
+  'Zinc diecast': { price:2.40,  unit:'kg',  source:'LME Zinc',           color:'#84cc16' },
+  'Copper/wiring':{ price:1.90,  unit:'m',   source:'LME Copper',         color:'#f97316' },
+  'Fabric woven': { price:8.50,  unit:'m²',  source:'3-quote benchmark',  color:'#ec4899' },
+  'Nonwoven':     { price:3.20,  unit:'m²',  source:'3-quote benchmark',  color:'#ec4899' },
+  'Hot melt adh': { price:3.80,  unit:'kg',  source:'3-quote benchmark',  color:'#06b6d4' },
+  'Fasteners':    { price:0.08,  unit:'pc',  source:'Catalogue pricing',  color:'#8b95a8' },
+  'Bought-out':   { price:1.00,  unit:'pc',  source:'Tier2 direct quote', color:'#8b95a8' },
+  'Custom':       { price:0,     unit:'pc',  source:'Enter manually',     color:'#8b95a8' }
+};
+
+var MACHINES = {
+  '100T press':    { rate:{ mx:18, us:35, cn:22 }},
+  '200T press':    { rate:{ mx:22, us:45, cn:28 }},
+  '400T press':    { rate:{ mx:32, us:65, cn:38 }},
+  '600T press':    { rate:{ mx:45, us:85, cn:52 }},
+  '800T press':    { rate:{ mx:55, us:95, cn:62 }},
+  '1000T press':   { rate:{ mx:72, us:120,cn:80 }},
+  'Foam pour':     { rate:{ mx:42, us:75, cn:48 }},
+  'Skin wrap':     { rate:{ mx:38, us:65, cn:42 }},
+  'Assembly bench':{ rate:{ mx:22, us:45, cn:26 }},
+  'Ultrasonic weld':{ rate:{ mx:28, us:55, cn:32 }},
+  'Waterjet trim': { rate:{ mx:65, us:110,cn:72 }},
+  'Die cut press': { rate:{ mx:35, us:65, cn:40 }},
+  'Compression mold':{ rate:{ mx:55, us:95, cn:62 }},
+  'Stamping press':{ rate:{ mx:40, us:75, cn:46 }},
+  'Custom':        { rate:{ mx:0, us:0, cn:0 }}
+};
+
+var TOOL_COMPLEXITY = {
+  'Simple (Class B, no texture)':     { base:45000  },
+  'Medium (Class A, basic)':          { base:95000  },
+  'Complex (Class A, textured, HR)':  { base:200000 },
+  'Very complex (multi-action)':      { base:320000 },
+  'Die / stamping tool':              { base:35000  },
+  'Fixture / gauge':                  { base:20000  },
+  'Custom (enter cost manually)':     { base:0      }
+};
+
+var TEST_STANDARDS = {
+  'FMVSS 302 Flammability':     { cost:1800, subs:3 },
+  'UV/Fade SAE J1885':          { cost:2200, subs:1 },
+  'VOC/Odor VDA 270':           { cost:1400, subs:1 },
+  'First Article (CMM/FAI)':    { cost:3500, subs:1 },
+  'PPAP Level 3 docs':          { cost:5200, subs:1 },
+  'Durability cycle test':      { cost:3800, subs:1 },
+  'EMC/FCC compliance':         { cost:4500, subs:1 },
+  'REACH/RoHS compliance':      { cost:800,  subs:1 },
+  'NVH squeak & rattle':        { cost:2000, subs:1 },
+  'Thermal cycling/sag':        { cost:2000, subs:1 },
+  'Custom':                     { cost:0,    subs:1 }
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+var matRows  = [];
+var procRows = [];
+var laborRows= [];
+var toolRows = [];
+var testRows = [];
+var rowId = 0;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+window.onload = function() {
+  renderIndexStrip();
+  updateRegion();
+  // Start with a few empty rows
+  addMatRow();
+  addProcRow();
+  addLaborRow();
+  addToolRow();
+  addTestRow();
+  recalc();
+};
+
+// ── INDEX STRIP ───────────────────────────────────────────────────────────
+function renderIndexStrip() {
+  var items = [
+    { name:'PP+GF30',   val:'$1.90/kg', src:'ICIS',        color:'#00d4aa' },
+    { name:'PU Foam',   val:'$2.80/kg', src:'ICIS MDI',    color:'#f59e0b' },
+    { name:'LME Zinc',  val:'$2.40/kg', src:'LME',         color:'#84cc16' },
+    { name:'LME Copper',val:'$8.50/kg', src:'LME',         color:'#f97316' },
+    { name:'HRC Steel', val:'$0.85/kg', src:'Fastmarkets', color:'#6366f1' },
+    { name:'MX Labor',  val:'$3.50/hr', src:'CONASAMI×1.5',color:'#a855f7' },
+    { name:'US Labor',  val:'$19.00/hr',src:'BLS SOC51',   color:'#0099ff' },
+    { name:'Freight MX',val:'$2.20/unit',src:'DAT Index',  color:'#06b6d4' }
+  ];
+  var html = '';
+  items.forEach(function(i) {
+    html += '<div class="index-chip" style="border-left:2px solid '+i.color+'">' +
+      '<div class="index-chip-name">'+i.name+'</div>' +
+      '<div class="index-chip-val" style="color:'+i.color+'">'+i.val+'</div>' +
+      '<div style="font-size:9px;color:var(--text3)">'+i.src+'</div>' +
+      '</div>';
+  });
+  document.getElementById('indexStrip').innerHTML = html;
 }
+
+// ── REGION UPDATE ─────────────────────────────────────────────────────────
+function updateRegion() {
+  var r = document.getElementById('prog_region').value;
+  var reg = REGIONS[r];
+  var loaded = (reg.baseWage * (1 + reg.burden)).toFixed(2);
+  document.getElementById('lb_base').value   = '$' + reg.baseWage.toFixed(2) + '/hr';
+  document.getElementById('lb_burden').value = (reg.burden*100).toFixed(0) + '%';
+  document.getElementById('lb_loaded').value = '$' + loaded + '/hr';
+  var freightEl = document.getElementById('logi_freight');
+  if(freightEl) freightEl.value = '$' + reg.freight.toFixed(2) + '/unit';
+  // Update FX
+  var fxEl = document.getElementById('hidn_fx');
+  if(fxEl && !reg.fxRisk) fxEl.value = '0';
+  else if(fxEl && reg.fxRisk && fxEl.value === '0') fxEl.value = '1.5';
+}
+
+function getLoadedRate() {
+  var override = parseFloat(document.getElementById('lb_override').value);
+  if(override > 0) return override;
+  var r = document.getElementById('prog_region').value;
+  var reg = REGIONS[r];
+  return reg.baseWage * (1 + reg.burden);
+}
+
+function getRegion() {
+  return document.getElementById('prog_region').value;
+}
+
+// ── SECTION NAVIGATION ────────────────────────────────────────────────────
+function showSection(id) {
+  var sections = document.querySelectorAll('.inp-section');
+  sections.forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('sec-'+id).classList.add('active');
+  var tabs = document.querySelectorAll('.stab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  event.target.classList.add('active');
+}
+
+// ── MATERIAL ROWS ─────────────────────────────────────────────────────────
+function addMatRow(partNo, partName, matType, qty, util) {
+  var id = rowId++;
+  matRows.push({ id:id, partNo:partNo||'', partName:partName||'', matType:matType||'PP+GF30', qty:qty||0, util:util||85 });
+  renderMatTable();
+}
+
+function renderMatTable() {
+  var html = '';
+  matRows.forEach(function(row, i) {
+    var mat = MATERIALS[row.matType] || MATERIALS['PP+GF30'];
+    var cost = row.qty > 0 ? (row.qty * mat.price) / (row.util/100) : 0;
+    
+    var matOptions = '';
+    Object.keys(MATERIALS).forEach(function(m) {
+      matOptions += '<option value="'+m+'"'+(row.matType===m?' selected':'')+'>'+m+'</option>';
+    });
+    
+    html += '<tr id="mr-'+row.id+'">' +
+      '<td><input class="bom-input" value="'+row.partNo+'" placeholder="Part No." onchange="updateMat('+i+',\'partNo\',this.value)" style="width:60px;margin-right:4px"><input class="bom-input" value="'+row.partName+'" placeholder="Description" onchange="updateMat('+i+',\'partName\',this.value)"></td>' +
+      '<td><select class="bom-input" onchange="updateMat('+i+',\'matType\',this.value)">'+matOptions+'</select></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.qty+'" step="0.01" placeholder="0" onchange="updateMat('+i+',\'qty\',this.value)" style="width:60px"> <span style="color:var(--text3);font-size:9px">'+mat.unit+'</span></td>' +
+      '<td><span style="color:var(--text3);font-size:9px">'+mat.unit+'</span></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.util+'" step="1" min="50" max="99" onchange="updateMat('+i+',\'util\',this.value)" style="width:45px">%</td>' +
+      '<td class="bom-calc">'+(cost>0?'$'+cost.toFixed(3):'—')+'</td>' +
+      '<td><button class="del-btn" onclick="delMat('+i+')">×</button></td>' +
+      '</tr>';
+  });
+  document.getElementById('matBody').innerHTML = html;
+}
+
+function updateMat(i, field, val) {
+  if(field === 'qty' || field === 'util') val = parseFloat(val)||0;
+  matRows[i][field] = val;
+  renderMatTable();
+  recalc();
+}
+
+function delMat(i) {
+  matRows.splice(i,1);
+  renderMatTable();
+  recalc();
+}
+
+function calcMatTotal() {
+  var total = 0;
+  matRows.forEach(function(row) {
+    var mat = MATERIALS[row.matType] || { price:0 };
+    if(row.qty > 0) total += (row.qty * mat.price) / (row.util/100);
+  });
+  return total;
+}
+
+// ── PROCESS ROWS ──────────────────────────────────────────────────────────
+function addProcRow(op, mach, cycle, oee) {
+  var id = rowId++;
+  procRows.push({ id:id, op:op||'', mach:mach||'Assembly bench', cycle:cycle||0, oee:oee||78, customRate:0 });
+  renderProcTable();
+}
+
+function renderProcTable() {
+  var reg = getRegion();
+  var html = '';
+  procRows.forEach(function(row, i) {
+    var machData = MACHINES[row.mach] || { rate:{mx:0,us:0,cn:0} };
+    var rate = row.customRate > 0 ? row.customRate : (machData.rate[reg]||0);
+    var cost = row.cycle > 0 ? (rate / 3600 * row.cycle) / (row.oee/100) : 0;
+    
+    var machOptions = '';
+    Object.keys(MACHINES).forEach(function(m) {
+      machOptions += '<option value="'+m+'"'+(row.mach===m?' selected':'')+'>'+m+'</option>';
+    });
+    
+    html += '<tr id="pr-'+row.id+'">' +
+      '<td><input class="bom-input" value="'+row.op+'" placeholder="Operation name" onchange="updateProc('+i+',\'op\',this.value)"></td>' +
+      '<td><select class="bom-input" onchange="updateProc('+i+',\'mach\',this.value)">'+machOptions+'</select></td>' +
+      '<td><input class="bom-input" type="number" value="'+(row.customRate||rate)+'" step="1" placeholder="'+rate+'" onchange="updateProc('+i+',\'customRate\',this.value)" style="width:55px"></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.cycle+'" step="1" placeholder="0" onchange="updateProc('+i+',\'cycle\',this.value)" style="width:55px">s</td>' +
+      '<td><input class="bom-input" type="number" value="'+row.oee+'" step="1" min="50" max="99" onchange="updateProc('+i+',\'oee\',this.value)" style="width:40px">%</td>' +
+      '<td class="bom-calc">'+(cost>0?'$'+cost.toFixed(3):'—')+'</td>' +
+      '<td><button class="del-btn" onclick="delProc('+i+')">×</button></td>' +
+      '</tr>';
+  });
+  document.getElementById('procBody').innerHTML = html;
+}
+
+function updateProc(i, field, val) {
+  if(['cycle','oee','customRate'].indexOf(field)>=0) val = parseFloat(val)||0;
+  procRows[i][field] = val;
+  renderProcTable();
+  recalc();
+}
+
+function delProc(i) {
+  procRows.splice(i,1);
+  renderProcTable();
+  recalc();
+}
+
+function calcProcTotal() {
+  var reg = getRegion();
+  var total = 0;
+  procRows.forEach(function(row) {
+    var machData = MACHINES[row.mach] || { rate:{mx:0,us:0,cn:0} };
+    var rate = row.customRate > 0 ? row.customRate : (machData.rate[reg]||0);
+    if(row.cycle > 0) total += (rate / 3600 * row.cycle) / (row.oee/100);
+  });
+  return total;
+}
+
+// ── LABOR ROWS ────────────────────────────────────────────────────────────
+function addLaborRow(station, ops, cycle) {
+  var id = rowId++;
+  laborRows.push({ id:id, station:station||'', ops:ops||1, cycle:cycle||0 });
+  renderLaborTable();
+}
+
+function renderLaborTable() {
+  var lr = getLoadedRate();
+  var html = '';
+  laborRows.forEach(function(row, i) {
+    var cost = row.cycle > 0 ? (row.ops * lr / 3600 * row.cycle) : 0;
+    html += '<tr>' +
+      '<td><input class="bom-input" value="'+row.station+'" placeholder="Station name" onchange="updateLabor('+i+',\'station\',this.value)"></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.ops+'" step="1" min="1" onchange="updateLabor('+i+',\'ops\',this.value)" style="width:45px"></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.cycle+'" step="1" placeholder="0" onchange="updateLabor('+i+',\'cycle\',this.value)" style="width:55px">s</td>' +
+      '<td class="bom-calc">'+(cost>0?'$'+cost.toFixed(3):'—')+'</td>' +
+      '<td><button class="del-btn" onclick="delLabor('+i+')">×</button></td>' +
+      '</tr>';
+  });
+  document.getElementById('laborBody').innerHTML = html;
+}
+
+function updateLabor(i, field, val) {
+  if(['ops','cycle'].indexOf(field)>=0) val = parseFloat(val)||0;
+  laborRows[i][field] = val;
+  renderLaborTable();
+  recalc();
+}
+
+function delLabor(i) {
+  laborRows.splice(i,1);
+  renderLaborTable();
+  recalc();
+}
+
+function calcLaborTotal() {
+  var lr = getLoadedRate();
+  var total = 0;
+  laborRows.forEach(function(row) {
+    if(row.cycle > 0) total += row.ops * lr / 3600 * row.cycle;
+  });
+  // Add indirect
+  var indirect = parseFloat(document.getElementById('lb_indirect').value)||0;
+  var pps = parseFloat(document.getElementById('lb_pps').value)||400;
+  if(indirect > 0 && pps > 0) total += indirect * lr * 7.5 / pps;
+  return total;
+}
+
+// ── TOOL ROWS ─────────────────────────────────────────────────────────────
+function addToolRow(desc, complexity, cost) {
+  var id = rowId++;
+  toolRows.push({ id:id, desc:desc||'', complexity:complexity||'Simple (Class B, no texture)', customCost:cost||0 });
+  renderToolTable();
+}
+
+function renderToolTable() {
+  var amort = parseFloat(document.getElementById('prog_amort').value)||500000;
+  var html = '';
+  toolRows.forEach(function(row, i) {
+    var compData = TOOL_COMPLEXITY[row.complexity] || { base:0 };
+    var toolCost = row.customCost > 0 ? row.customCost : compData.base;
+    var perPart = amort > 0 ? toolCost / amort : 0;
+    
+    var compOptions = '';
+    Object.keys(TOOL_COMPLEXITY).forEach(function(c) {
+      compOptions += '<option value="'+c+'"'+(row.complexity===c?' selected':'')+'>'+c+'</option>';
+    });
+    
+    html += '<tr>' +
+      '<td><input class="bom-input" value="'+row.desc+'" placeholder="Tool description" onchange="updateTool('+i+',\'desc\',this.value)"></td>' +
+      '<td><select class="bom-input" onchange="updateTool('+i+',\'complexity\',this.value)">'+compOptions+'</select></td>' +
+      '<td><input class="bom-input" type="number" value="'+(row.customCost||toolCost)+'" step="1000" placeholder="'+toolCost+'" onchange="updateTool('+i+',\'customCost\',this.value)"></td>' +
+      '<td class="bom-calc">'+(perPart>0?'$'+perPart.toFixed(3):'—')+'</td>' +
+      '<td><button class="del-btn" onclick="delTool('+i+')">×</button></td>' +
+      '</tr>';
+  });
+  document.getElementById('toolBody').innerHTML = html;
+}
+
+function updateTool(i, field, val) {
+  if(field==='customCost') val = parseFloat(val)||0;
+  toolRows[i][field] = val;
+  renderToolTable();
+  recalc();
+}
+
+function delTool(i) {
+  toolRows.splice(i,1);
+  renderToolTable();
+  recalc();
+}
+
+function calcToolTotal() {
+  var amort = parseFloat(document.getElementById('prog_amort').value)||500000;
+  var total = 0;
+  toolRows.forEach(function(row) {
+    var compData = TOOL_COMPLEXITY[row.complexity] || { base:0 };
+    var toolCost = row.customCost > 0 ? row.customCost : compData.base;
+    if(amort > 0) total += toolCost / amort;
+  });
+  return total;
+}
+
+// ── TEST ROWS ─────────────────────────────────────────────────────────────
+function addTestRow(name, std, cost, subs) {
+  var id = rowId++;
+  var stdData = TEST_STANDARDS[std||'FMVSS 302 Flammability'] || { cost:0, subs:1 };
+  testRows.push({ id:id, name:name||'', std:std||'FMVSS 302 Flammability', customCost:cost||0, subs:subs||stdData.subs });
+  renderTestTable();
+}
+
+function renderTestTable() {
+  var vol = parseFloat(document.getElementById('prog_vol').value)||100000;
+  var html = '';
+  testRows.forEach(function(row, i) {
+    var stdData = TEST_STANDARDS[row.std] || { cost:0, subs:1 };
+    var testCost = row.customCost > 0 ? row.customCost : stdData.cost;
+    var perPart = vol > 0 ? (testCost * row.subs) / vol : 0;
+    
+    var stdOptions = '';
+    Object.keys(TEST_STANDARDS).forEach(function(s) {
+      stdOptions += '<option value="'+s+'"'+(row.std===s?' selected':'')+'>'+s+'</option>';
+    });
+    
+    html += '<tr>' +
+      '<td><input class="bom-input" value="'+row.name+'" placeholder="Test description" onchange="updateTest('+i+',\'name\',this.value)"></td>' +
+      '<td><select class="bom-input" onchange="updateTest('+i+',\'std\',this.value)">'+stdOptions+'</select></td>' +
+      '<td><input class="bom-input" type="number" value="'+(row.customCost||testCost)+'" step="100" placeholder="'+testCost+'" onchange="updateTest('+i+',\'customCost\',this.value)"></td>' +
+      '<td><input class="bom-input" type="number" value="'+row.subs+'" step="1" min="1" onchange="updateTest('+i+',\'subs\',this.value)" style="width:40px"></td>' +
+      '<td class="bom-calc">'+(perPart>0?'$'+perPart.toFixed(4):'—')+'</td>' +
+      '<td><button class="del-btn" onclick="delTest('+i+')">×</button></td>' +
+      '</tr>';
+  });
+  document.getElementById('testBody').innerHTML = html;
+}
+
+function updateTest(i, field, val) {
+  if(['customCost','subs'].indexOf(field)>=0) val = parseFloat(val)||0;
+  testRows[i][field] = val;
+  renderTestTable();
+  recalc();
+}
+
+function delTest(i) {
+  testRows.splice(i,1);
+  renderTestTable();
+  recalc();
+}
+
+function calcTestTotal() {
+  var vol = parseFloat(document.getElementById('prog_vol').value)||100000;
+  var total = 0;
+  testRows.forEach(function(row) {
+    var stdData = TEST_STANDARDS[row.std] || { cost:0 };
+    var testCost = row.customCost > 0 ? row.customCost : stdData.cost;
+    if(vol > 0) total += (testCost * row.subs) / vol;
+  });
+  return total;
+}
+
+// ── MAIN RECALC ───────────────────────────────────────────────────────────
+function recalc() {
+  updateRegion();
+
+  var vol  = parseFloat(document.getElementById('prog_vol').value)||100000;
+  var life = parseFloat(document.getElementById('prog_life').value)||5;
+  var amort= parseFloat(document.getElementById('prog_amort').value)||500000;
+  var reg  = getRegion();
+  var quote= parseFloat(document.getElementById('prog_quote').value)||0;
+
+  // ── Bucket calculations ──
+  var mat   = calcMatTotal();
+  var proc  = calcProcTotal();
+  var labor = calcLaborTotal();
+
+  // Overhead
+  var ovhdMethod = document.getElementById('ovhd_method').value;
+  var ovhd = 0;
+  var ovhdManualSection = document.getElementById('ovhd_manual_section');
+  if(ovhdMethod === 'pct') {
+    ovhdManualSection.style.display = 'none';
+    var burdenRate = (parseFloat(document.getElementById('ovhd_burden').value)||200) / 100;
+    ovhd = labor * burdenRate;
+  } else {
+    ovhdManualSection.style.display = 'block';
+    var depr   = (parseFloat(document.getElementById('ovhd_depr').value)||0) / vol;
+    var fac    = (parseFloat(document.getElementById('ovhd_fac').value)||0) / vol;
+    var energy = (parseFloat(document.getElementById('ovhd_energy').value)||0) / vol;
+    var maint  = (parseFloat(document.getElementById('ovhd_maint').value)||0) / vol;
+    var qual   = (parseFloat(document.getElementById('ovhd_qual').value)||0) / vol;
+    var staff  = (parseFloat(document.getElementById('ovhd_staff').value)||0) / vol;
+    ovhd = depr + fac + energy + maint + qual + staff;
+  }
+  // PPAP and scrap
+  var ppap  = (parseFloat(document.getElementById('ovhd_ppap').value)||0) / vol;
+  var scrapPct = (parseFloat(document.getElementById('ovhd_scrap').value)||2.5) / 100;
+  var scrap = (mat + proc + labor) * scrapPct;
+  ovhd += ppap + scrap;
+
+  // SG&A
+  var sgaSales = parseFloat(document.getElementById('sga_sales').value)||0;
+  var sgaAdmin = parseFloat(document.getElementById('sga_admin').value)||0;
+  var sgaEng   = parseFloat(document.getElementById('sga_eng').value)||0;
+  var sgaRd    = parseFloat(document.getElementById('sga_rd').value)||0;
+  var sgaExec  = parseFloat(document.getElementById('sga_exec').value)||0;
+  var sgaTotalPct = sgaSales + sgaAdmin + sgaEng + sgaRd + sgaExec;
+  document.getElementById('sga_total').value = sgaTotalPct.toFixed(1) + '%';
+  var mfgSubtotal = mat + proc + labor + ovhd;
+  var sga = mfgSubtotal * (sgaTotalPct/100);
+
+  // Logistics
+  var incoterms = document.getElementById('logi_inco').value;
+  var freightBase = REGIONS[reg].freight;
+  var freight = incoterms === 'ddp' ? freightBase : (incoterms === 'fob' ? freightBase * 0.4 : 0);
+  var pkg      = parseFloat(document.getElementById('logi_pkg').value)||0;
+  var dunnage  = parseFloat(document.getElementById('logi_dunnage').value)||0;
+  var duty     = parseFloat(document.getElementById('logi_duty').value)||0;
+  var inbound  = parseFloat(document.getElementById('logi_inbound').value)||0;
+  var logi = freight + pkg + dunnage + inbound + (mfgSubtotal * duty/100);
+
+  // Tooling
+  var tool = calcToolTotal();
+
+  // Testing
+  var test = calcTestTotal();
+
+  // Pre-margin subtotal
+  var preMargin = mat + proc + labor + ovhd + sga + logi + tool + test;
+
+  // Hidden costs
+  var terms  = parseFloat(document.getElementById('hidn_terms').value)||60;
+  var coc    = (parseFloat(document.getElementById('hidn_coc').value)||10) / 100;
+  var fx     = (parseFloat(document.getElementById('hidn_fx').value)||0) / 100;
+  var exp    = parseFloat(document.getElementById('hidn_exp').value)||0;
+  var cap    = parseFloat(document.getElementById('hidn_cap').value)||0;
+  var warr   = (parseFloat(document.getElementById('hidn_warr').value)||0) / 100;
+  var pm     = parseFloat(document.getElementById('hidn_pm').value)||0;
+  var infl   = (parseFloat(document.getElementById('hidn_infl').value)||0) / 100;
+  var hidn = preMargin * coc * (terms/365) +
+             preMargin * fx +
+             exp + cap + pm +
+             preMargin * warr +
+             preMargin * infl;
+
+  // Margin
+  var mrnPct  = (parseFloat(document.getElementById('mrgn_pct').value)||5) / 100;
+  var preMarginWithHidn = preMargin + hidn;
+  var mrn = preMarginWithHidn * mrnPct;
+  document.getElementById('mrgn_calc').value = '$' + mrn.toFixed(2);
+
+  var grandTotal = preMarginWithHidn + mrn;
+
+  // ── UPDATE RESULTS ──
+  var buckets = [
+    { name:'Direct Material',         cost:mat,   color:'#00d4aa', pct:0 },
+    { name:'Process Cost',            cost:proc,  color:'#0099ff', pct:0 },
+    { name:'Direct Labor',            cost:labor, color:'#a855f7', pct:0 },
+    { name:'Manufacturing Overhead',  cost:ovhd,  color:'#f59e0b', pct:0 },
+    { name:'SG&A',                    cost:sga,   color:'#ef4444', pct:0 },
+    { name:'Logistics & Packaging',   cost:logi,  color:'#06b6d4', pct:0 },
+    { name:'Tooling Amortization',    cost:tool,  color:'#84cc16', pct:0 },
+    { name:'Testing & Compliance',    cost:test,  color:'#f97316', pct:0 },
+    { name:'Hidden Costs',            cost:hidn,  color:'#ec4899', pct:0 },
+    { name:'Supplier Margin',         cost:mrn,   color:'#6366f1', pct:0 }
+  ];
+
+  buckets.forEach(function(b) {
+    b.pct = grandTotal > 0 ? (b.cost/grandTotal*100) : 0;
+  });
+
+  // Grand total rows
+  var gtr = document.getElementById('grandTotalRows');
+  var ghtml = '';
+  buckets.forEach(function(b) {
+    ghtml += '<div class="total-row">' +
+      '<span class="total-label" style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:'+b.color+';display:inline-block"></span>'+b.name+'</span>' +
+      '<span class="total-val" style="color:'+b.color+'">$'+b.cost.toFixed(2)+'</span>' +
+      '</div>';
+  });
+  ghtml += '<div style="border-top:2px solid var(--border2);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center">' +
+    '<span style="font-family:Syne,sans-serif;font-weight:700;font-size:15px;color:var(--accent)">SHOULD COST TOTAL</span>' +
+    '<span style="font-family:DM Mono,monospace;font-size:20px;font-weight:700;color:var(--accent)">$'+grandTotal.toFixed(2)+'</span>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:space-between;margin-top:6px">' +
+    '<span style="font-size:11px;color:var(--text3)">Annual cost at '+Math.round(vol/1000)+'K units</span>' +
+    '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text3)">$'+Math.round(grandTotal*vol/1000)+'K</span>' +
+    '</div>' +
+    '<div style="display:flex;justify-content:space-between">' +
+    '<span style="font-size:11px;color:var(--text3)">Program life cost ('+life+' yrs)</span>' +
+    '<span style="font-family:DM Mono,monospace;font-size:12px;color:var(--text3)">$'+Math.round(grandTotal*vol*life/1000000)+'M</span>' +
+    '</div>';
+  gtr.innerHTML = ghtml;
+
+  // Waterfall
+  var maxCost = Math.max.apply(null, buckets.map(function(b){return b.cost;})) || 1;
+  var wfHtml = '';
+  buckets.forEach(function(b) {
+    var w = grandTotal > 0 ? Math.max(b.cost/grandTotal*100, 0) : 0;
+    wfHtml += '<div class="waterfall-item">' +
+      '<div class="wf-label">'+b.name+'</div>' +
+      '<div class="wf-bar-wrap"><div class="wf-bar" style="width:'+Math.max(w*2,0)+'%;background:'+b.color+'"></div></div>' +
+      '<div class="wf-val" style="color:'+b.color+'">' + (b.cost>0?'$'+b.cost.toFixed(2):'—') + '</div>' +
+      '</div>';
+  });
+  document.getElementById('waterfallDiv').innerHTML = wfHtml;
+
+  // Gap analysis
+  var gapCard = document.getElementById('gapCard');
+  var gapBody = document.getElementById('gapBody');
+  if(quote > 0) {
+    gapCard.style.display = 'block';
+    var gap = quote - grandTotal;
+    var gapPct = grandTotal > 0 ? (gap/grandTotal*100) : 0;
+    var target = grandTotal * 1.03;
+    var walkaway = grandTotal * 1.08;
+    var annualOpp = gap * vol;
+    gapBody.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">' +
+      '<div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px">' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text3)">SHOULD COST</div>' +
+      '<div style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--accent)">$'+grandTotal.toFixed(2)+'</div></div>' +
+      '<div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px">' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text3)">SUPPLIER QUOTE</div>' +
+      '<div style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:var(--accent2)">$'+quote.toFixed(2)+'</div></div>' +
+      '<div style="text-align:center;padding:12px;background:var(--bg3);border-radius:8px;border:1px solid '+(gap>0?'rgba(239,68,68,.3)':'rgba(16,185,129,.3)')+'>">' +
+      '<div style="font-family:DM Mono,monospace;font-size:10px;color:var(--text3)">GAP</div>' +
+      '<div style="font-family:Syne,sans-serif;font-size:22px;font-weight:700;color:'+(gap>0?'var(--red)':'var(--green)')+'">'+( gap>=0?'+':'')+' $'+gap.toFixed(2)+'</div>' +
+      '<div style="font-size:10px;color:var(--text3)">'+gapPct.toFixed(1)+'% '+(gap>0?'above':'below')+' should cost</div></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">' +
+      '<div style="padding:10px;background:var(--accent-dim);border:1px solid rgba(0,212,170,.2);border-radius:8px">' +
+      '<div style="font-size:10px;color:var(--text3)">Opening Position</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:500;color:var(--accent)">$'+grandTotal.toFixed(2)+'</div>' +
+      '<div style="font-size:10px;color:var(--text3)">Your should cost — anchor here</div></div>' +
+      '<div style="padding:10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:8px">' +
+      '<div style="font-size:10px;color:var(--text3)">Target (+3%)</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:500;color:var(--green)">$'+target.toFixed(2)+'</div>' +
+      '<div style="font-size:10px;color:var(--text3)">Where you want to land</div></div>' +
+      '<div style="padding:10px;background:var(--amber-dim);border:1px solid rgba(245,158,11,.2);border-radius:8px">' +
+      '<div style="font-size:10px;color:var(--text3)">Walkaway (+8%)</div>' +
+      '<div style="font-family:DM Mono,monospace;font-size:14px;font-weight:500;color:var(--amber)">$'+walkaway.toFixed(2)+'</div>' +
+      '<div style="font-size:10px;color:var(--text3)">Above this — resource</div></div>' +
+      '</div>' +
+      '<div style="margin-top:12px;padding:10px;background:var(--bg3);border-radius:8px;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:12px;color:var(--text2)">Annual opportunity at '+Math.round(vol/1000)+'K units/yr</span>' +
+      '<span style="font-family:DM Mono,monospace;font-size:14px;font-weight:500;color:'+(annualOpp>0?'var(--red)':'var(--green)')+'">$'+Math.round(Math.abs(annualOpp)/1000)+'K/yr</span>' +
+      '</div>';
+  } else {
+    gapCard.style.display = 'none';
+  }
+
+  // Status
+  document.getElementById('calcStatus').textContent = grandTotal > 0 ? '$'+grandTotal.toFixed(2)+'/PART' : 'ENTER DATA';
+}
+
+// ── SAVE / LOAD ───────────────────────────────────────────────────────────
+function saveModel() {
+  var model = {
+    prog: {
+      name: document.getElementById('prog_name').value,
+      pn:   document.getElementById('prog_pn').value,
+      desc: document.getElementById('prog_desc').value,
+      region: document.getElementById('prog_region').value,
+      vol:  document.getElementById('prog_vol').value,
+      life: document.getElementById('prog_life').value,
+      quote:document.getElementById('prog_quote').value,
+      amort:document.getElementById('prog_amort').value
+    },
+    matRows:matRows, procRows:procRows, laborRows:laborRows,
+    toolRows:toolRows, testRows:testRows,
+    saved: new Date().toISOString()
+  };
+  try {
+    localStorage.setItem('ac_model', JSON.stringify(model));
+    var btn = event.target;
+    btn.textContent = '✓ Saved';
+    setTimeout(function(){ btn.textContent='💾 Save Model'; }, 1500);
+  } catch(e) {
+    alert('Save failed: '+e.message);
+  }
+}
+
+function clearAll() {
+  if(!confirm('Clear all entered data?')) return;
+  matRows=[]; procRows=[]; laborRows=[]; toolRows=[]; testRows=[];
+  document.getElementById('prog_name').value='';
+  document.getElementById('prog_pn').value='';
+  document.getElementById('prog_desc').value='';
+  document.getElementById('prog_quote').value='';
+  renderMatTable(); renderProcTable(); renderLaborTable(); renderToolTable(); renderTestTable();
+  recalc();
+}
+
+function loadDemo() {
+  // Load console demo data
+  matRows = [
+    { id:rowId++, partNo:'CONS-001', partName:'Main structure housing',    matType:'PP+GF30',     qty:4.10, util:85 },
+    { id:rowId++, partNo:'CONS-002', partName:'Lid panel',                  matType:'PC/ABS',      qty:0.85, util:87 },
+    { id:rowId++, partNo:'CONS-003', partName:'Storage bin liner',           matType:'PP unfilled', qty:0.60, util:88 },
+    { id:rowId++, partNo:'CONS-004', partName:'Armrest pad foam',            matType:'PU foam',     qty:0.55, util:84 },
+    { id:rowId++, partNo:'CONS-005', partName:'Armrest skin',                matType:'TPO skin',    qty:0.42, util:78 },
+    { id:rowId++, partNo:'CONS-006', partName:'Mounting bracket stamped',    matType:'HRC Steel',   qty:0.53, util:72 },
+    { id:rowId++, partNo:'CONS-007', partName:'Hinge die cast x2',           matType:'Zinc diecast',qty:0.33, util:85 },
+    { id:rowId++, partNo:'CONS-008', partName:'USB module',                  matType:'Bought-out',  qty:8.20, util:100 },
+    { id:rowId++, partNo:'CONS-009', partName:'Wireless charger',            matType:'Bought-out',  qty:6.80, util:100 },
+    { id:rowId++, partNo:'CONS-010', partName:'Wiring harness 1.2m',        matType:'Copper/wiring',qty:1.20, util:100 },
+    { id:rowId++, partNo:'CONS-011', partName:'Fasteners and clips x18',    matType:'Fasteners',   qty:18,   util:100 },
+  ];
+  procRows = [
+    { id:rowId++, op:'Main structure injection molding', mach:'800T press',     cycle:47,  oee:78, customRate:0 },
+    { id:rowId++, op:'Lid panel injection molding',      mach:'400T press',     cycle:32,  oee:78, customRate:0 },
+    { id:rowId++, op:'Storage bin molding',               mach:'200T press',     cycle:28,  oee:78, customRate:0 },
+    { id:rowId++, op:'Armrest foam pour and cure',        mach:'Foam pour',      cycle:240, oee:75, customRate:0 },
+    { id:rowId++, op:'Armrest skin wrapping',             mach:'Skin wrap',      cycle:60,  oee:75, customRate:0 },
+    { id:rowId++, op:'Edge trimming',                     mach:'Die cut press',  cycle:45,  oee:80, customRate:0 },
+    { id:rowId++, op:'Ultrasonic welding',                mach:'Ultrasonic weld',cycle:20,  oee:85, customRate:0 },
+  ];
+  laborRows = [
+    { id:rowId++, station:'Press operator — molding',    ops:1, cycle:47  },
+    { id:rowId++, station:'Foam pour — 2 operators',     ops:2, cycle:240 },
+    { id:rowId++, station:'Skin wrap — 6 operators',     ops:6, cycle:60  },
+    { id:rowId++, station:'Sub-assembly — hinge+USB',    ops:3, cycle:180 },
+    { id:rowId++, station:'Final inspection',            ops:1, cycle:60  },
+  ];
+  toolRows = [
+    { id:rowId++, desc:'Main housing mold — Class A textured HR', complexity:'Complex (Class A, textured, HR)', customCost:200000 },
+    { id:rowId++, desc:'Lid panel mold — Class A',                complexity:'Medium (Class A, basic)',         customCost:95000  },
+    { id:rowId++, desc:'Storage bin mold — Class B',              complexity:'Simple (Class B, no texture)',    customCost:45000  },
+    { id:rowId++, desc:'Foam pour tooling and fixtures',          complexity:'Fixture / gauge',                 customCost:90000  },
+    { id:rowId++, desc:'Assembly check fixture',                  complexity:'Fixture / gauge',                 customCost:55000  },
+  ];
+  testRows = [
+    { id:rowId++, name:'Flammability testing',   std:'FMVSS 302 Flammability', customCost:1800, subs:3 },
+    { id:rowId++, name:'UV fade resistance',     std:'UV/Fade SAE J1885',      customCost:2200, subs:1 },
+    { id:rowId++, name:'VOC emissions test',     std:'VOC/Odor VDA 270',       customCost:1400, subs:1 },
+    { id:rowId++, name:'First article CMM',      std:'First Article (CMM/FAI)',customCost:3500, subs:1 },
+    { id:rowId++, name:'PPAP Level 3 package',   std:'PPAP Level 3 docs',      customCost:5200, subs:1 },
+    { id:rowId++, name:'EMC FCC compliance',     std:'EMC/FCC compliance',     customCost:4500, subs:1 },
+  ];
+  // Set program info
+  document.getElementById('prog_name').value  = 'Model Y';
+  document.getElementById('prog_pn').value    = 'AC-CONSOLE-001';
+  document.getElementById('prog_desc').value  = 'Full Center Console Assembly';
+  document.getElementById('prog_region').value= 'mx';
+  document.getElementById('prog_vol').value   = '100000';
+  document.getElementById('prog_life').value  = '5';
+  document.getElementById('prog_quote').value = '145';
+  document.getElementById('prog_amort').value = '500000';
+
+  renderMatTable(); renderProcTable(); renderLaborTable(); renderToolTable(); renderTestTable();
+  recalc();
+}
+
 </script>
 </body>
 </html>
