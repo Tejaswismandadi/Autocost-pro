@@ -112,9 +112,11 @@ select.finput option{background:var(--bg3);}
       <div class="page-subtitle">Enter your part data below. Every cost calculates automatically.</div>
     </div>
     <div class="action-bar">
-      <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑 Clear All</button>
-      <button class="btn btn-secondary btn-sm" onclick="loadDemo()">📋 Load Demo</button>
-      <button class="btn btn-primary btn-sm" onclick="saveModel()">💾 Save Model</button>
+      <button class="btn btn-secondary btn-sm" onclick="clearAll()">🗑 Clear</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadDemo()">📋 Demo</button>
+      <button class="btn btn-secondary btn-sm" onclick="exportModel()">⬇ Export File</button>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">⬆ Import File<input type="file" accept=".json" onchange="importModel(event)" style="display:none"></label>
+      <button class="btn btn-primary btn-sm" onclick="saveModel()">💾 Save Browser</button>
     </div>
   </div>
 
@@ -1158,6 +1160,122 @@ function loadDemo() {
   renderMatTable(); renderProcTable(); renderLaborTable(); renderToolTable(); renderTestTable();
   recalc();
 }
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────────────────
+
+function exportModel() {
+  var model = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    prog: {
+      name:   document.getElementById('prog_name').value,
+      pn:     document.getElementById('prog_pn').value,
+      desc:   document.getElementById('prog_desc').value,
+      region: document.getElementById('prog_region').value,
+      vol:    document.getElementById('prog_vol').value,
+      life:   document.getElementById('prog_life').value,
+      quote:  document.getElementById('prog_quote').value,
+      amort:  document.getElementById('prog_amort').value
+    },
+    inputs: {
+      lb_override:  document.getElementById('lb_override').value,
+      ovhd_method:  document.getElementById('ovhd_method').value,
+      ovhd_burden:  document.getElementById('ovhd_burden').value,
+      ovhd_ppap:    document.getElementById('ovhd_ppap').value,
+      ovhd_scrap:   document.getElementById('ovhd_scrap').value,
+      sga_sales:    document.getElementById('sga_sales').value,
+      sga_admin:    document.getElementById('sga_admin').value,
+      sga_eng:      document.getElementById('sga_eng').value,
+      sga_rd:       document.getElementById('sga_rd').value,
+      sga_exec:     document.getElementById('sga_exec').value,
+      logi_inco:    document.getElementById('logi_inco').value,
+      logi_pkg:     document.getElementById('logi_pkg').value,
+      logi_dunnage: document.getElementById('logi_dunnage').value,
+      logi_duty:    document.getElementById('logi_duty').value,
+      logi_inbound: document.getElementById('logi_inbound').value,
+      hidn_terms:   document.getElementById('hidn_terms').value,
+      hidn_coc:     document.getElementById('hidn_coc').value,
+      hidn_fx:      document.getElementById('hidn_fx').value,
+      hidn_exp:     document.getElementById('hidn_exp').value,
+      hidn_cap:     document.getElementById('hidn_cap').value,
+      hidn_warr:    document.getElementById('hidn_warr').value,
+      hidn_pm:      document.getElementById('hidn_pm').value,
+      hidn_infl:    document.getElementById('hidn_infl').value,
+      mrgn_pct:     document.getElementById('mrgn_pct').value
+    },
+    matRows:   matRows,
+    procRows:  procRows,
+    laborRows: laborRows,
+    toolRows:  toolRows,
+    testRows:  testRows
+  };
+
+  var json = JSON.stringify(model, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  var name = (document.getElementById('prog_name').value || 'should-cost').replace(/[^a-z0-9]/gi,'_');
+  var date = new Date().toISOString().split('T')[0];
+  a.href     = url;
+  a.download = name + '_' + date + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importModel(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var model = JSON.parse(e.target.result);
+
+      // Restore program info
+      if (model.prog) {
+        var fields = ['name','pn','desc','region','vol','life','quote','amort'];
+        fields.forEach(function(f) {
+          var el = document.getElementById('prog_' + f);
+          if (el && model.prog[f] !== undefined) el.value = model.prog[f];
+        });
+      }
+
+      // Restore all input fields
+      if (model.inputs) {
+        Object.keys(model.inputs).forEach(function(k) {
+          var el = document.getElementById(k);
+          if (el) el.value = model.inputs[k];
+        });
+      }
+
+      // Restore BOM rows
+      matRows   = model.matRows   || [];
+      procRows  = model.procRows  || [];
+      laborRows = model.laborRows || [];
+      toolRows  = model.toolRows  || [];
+      testRows  = model.testRows  || [];
+
+      // Re-render all tables and recalculate
+      renderMatTable();
+      renderProcTable();
+      renderLaborTable();
+      renderToolTable();
+      renderTestTable();
+      recalc();
+
+      var msg = 'Model loaded successfully.';
+      if (model.prog && model.prog.name) msg += '\nProgram: ' + model.prog.name;
+      if (model.exportDate) msg += '\nSaved: ' + new Date(model.exportDate).toLocaleDateString();
+      alert(msg);
+    } catch (err) {
+      alert('Error loading file: ' + err.message + '\nMake sure you selected a valid AutoCost Pro .json export file.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
 
 </script>
 </body>
